@@ -252,3 +252,44 @@ void CMatrix4x4::FaceTarget(const CVector3& target)
     SetRow(1, axisY * scale.y);
     SetRow(2, axisZ * scale.z);
 }
+
+
+// Return the rotation stored in this matrix as Euler angles
+CVector3 CMatrix4x4::GetEulerAngles()
+{
+	// Calculate matrix scaling
+	float scaleX = sqrt( e00*e00 + e01*e01 + e02*e02 );
+	float scaleY = sqrt( e10*e10 + e11*e11 + e12*e12 );
+	float scaleZ = sqrt( e20*e20 + e21*e21 + e22*e22 );
+
+	// Calculate inverse scaling to extract rotational values only
+	float invScaleX = 1.0f / scaleX;
+	float invScaleY = 1.0f / scaleY;
+	float invScaleZ = 1.0f / scaleZ;
+
+	float sX, cX, sY, cY, sZ, cZ;
+
+    sX = -e21 * invScaleZ;
+    cX = sqrt( 1.0f - sX*sX );
+
+    // If no gimbal lock...
+    if (abs(cX) > 0.001f)
+    {
+	    float invCX = 1.0f / cX;
+	    sZ = e01 * invCX * invScaleX;
+	    cZ = e11 * invCX * invScaleY;
+	    sY = e20 * invCX * invScaleZ;
+	    cY = e22 * invCX * invScaleZ;
+    }
+    else
+    {
+	    // Gimbal lock - force Z angle to 0
+	    sZ = 0.0f;
+	    cZ = 1.0f;
+	    sY = -e02 * invScaleX;
+	    cY =  e00 * invScaleX;
+    }
+
+	return { atan2(sX, cX), atan2(sY, cY), atan2(sZ, cZ) };
+}
+

@@ -37,6 +37,14 @@ public:
 				  KeyCode turnCW, KeyCode turnCCW, KeyCode moveForward, KeyCode moveBackward );
 
 
+    void FaceTarget(CVector3 target)
+    {
+        UpdateWorldMatrix();
+        mWorldMatrix.FaceTarget(target);
+        mRotation = mWorldMatrix.GetEulerAngles();
+    }
+
+
 	//-------------------------------------
 	// Data access
 	//-------------------------------------

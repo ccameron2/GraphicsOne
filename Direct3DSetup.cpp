@@ -54,7 +54,7 @@ bool InitDirect3D()
     swapDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     swapDesc.SampleDesc.Count   = 1;
     swapDesc.SampleDesc.Quality = 0;
-    UINT flags = D3D11_CREATE_DEVICE_DEBUG; // Set this to D3D11_CREATE_DEVICE_DEBUG to get more debugging information (in the "Output" window of Visual Studio)
+    UINT flags = 0; // Set this to D3D11_CREATE_DEVICE_DEBUG to get more debugging information (in the "Output" window of Visual Studio)
     hr = D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, 0, flags, 0, 0, D3D11_SDK_VERSION,
                                        &swapDesc, &gSwapChain, &gD3DDevice, nullptr, &gD3DContext);
     if (FAILED(hr))

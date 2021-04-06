@@ -10,43 +10,43 @@ void Camera::Control(float frameTime, KeyCode turnUp, KeyCode turnDown, KeyCode 
                                       KeyCode moveForward, KeyCode moveBackward, KeyCode moveLeft, KeyCode moveRight)
 {
 	//**** ROTATION ****
-	if (KeyHeld(Key_Down))
+	if (KeyHeld(turnDown))
 	{
 		mRotation.x += ROTATION_SPEED * frameTime; // Use of frameTime to ensure same speed on different machines
 	}
-	if (KeyHeld(Key_Up))
+	if (KeyHeld(turnUp))
 	{
 		mRotation.x -= ROTATION_SPEED * frameTime;
 	}
-	if (KeyHeld(Key_Right))
+	if (KeyHeld(turnRight))
 	{
 		mRotation.y += ROTATION_SPEED * frameTime;
 	}
-	if (KeyHeld(Key_Left))
+	if (KeyHeld(turnLeft))
 	{
 		mRotation.y -= ROTATION_SPEED * frameTime;
 	}
 
 	//**** LOCAL MOVEMENT ****
-	if (KeyHeld(Key_D))
+	if (KeyHeld(moveRight))
 	{
 		mPosition.x += MOVEMENT_SPEED * frameTime * mWorldMatrix.e00; // See comments on local movement in UpdateCube code above
-		mPosition.y += MOVEMENT_SPEED * frameTime * mWorldMatrix.e01; 
-		mPosition.z += MOVEMENT_SPEED * frameTime * mWorldMatrix.e02; 
+		mPosition.y += MOVEMENT_SPEED * frameTime * mWorldMatrix.e01;
+		mPosition.z += MOVEMENT_SPEED * frameTime * mWorldMatrix.e02;
 	}
-	if (KeyHeld(Key_A))
+	if (KeyHeld(moveLeft))
 	{
 		mPosition.x -= MOVEMENT_SPEED * frameTime * mWorldMatrix.e00;
 		mPosition.y -= MOVEMENT_SPEED * frameTime * mWorldMatrix.e01;
 		mPosition.z -= MOVEMENT_SPEED * frameTime * mWorldMatrix.e02;
 	}
-	if (KeyHeld(Key_W))
+	if (KeyHeld(moveForward))
 	{
 		mPosition.x += MOVEMENT_SPEED * frameTime * mWorldMatrix.e20;
 		mPosition.y += MOVEMENT_SPEED * frameTime * mWorldMatrix.e21;
 		mPosition.z += MOVEMENT_SPEED * frameTime * mWorldMatrix.e22;
 	}
-	if (KeyHeld(Key_S))
+	if (KeyHeld(moveBackward))
 	{
 		mPosition.x -= MOVEMENT_SPEED * frameTime * mWorldMatrix.e20;
 		mPosition.y -= MOVEMENT_SPEED * frameTime * mWorldMatrix.e21;

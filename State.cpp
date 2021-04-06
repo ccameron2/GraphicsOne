@@ -53,9 +53,9 @@ bool CreateStates()
 
 	////-------- Point Sampling (pixelated textures) --------////
 	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT; // Point filtering
-	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;   // Wrap addressing mode for texture coordinates outside 0->1
-	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;   // --"--
-	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;   // --"--
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;  // Clamp addressing mode for texture coordinates outside 0->1
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;  // --"--
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;  // --"--
 	samplerDesc.MaxAnisotropy = 1;                       // Number of samples used if using anisotropic filtering, more is better but max value depends on GPU
 
 	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX; // Controls how much mip-mapping can be used. These settings are full mip-mapping, the usual values

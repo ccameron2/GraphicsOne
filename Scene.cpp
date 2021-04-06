@@ -36,72 +36,71 @@ const float MOVEMENT_SPEED = 50.0f; // 50 units per second for movement (what a 
 
 
 // Meshes, models and cameras, same meaning as TL-Engine. Meshes prepared in InitGeometry function, Models & camera in InitScene
-Mesh* gCubeMesh;
-Mesh* gDecalMesh;
+Mesh* gCharacterMesh;
 Mesh* gCrateMesh;
-Mesh* gSphereMesh;
 Mesh* gGroundMesh;
+Mesh* gSphereMesh;
 Mesh* gLightMesh;
-Mesh* gPortalMesh;
 Mesh* gTeapotMesh;
 
-Model* gCube;
-Model* gDecal;
+Model* gCharacter;
 Model* gCrate;
-Model* gSphere;
 Model* gGround;
-Model* gLight1;
-Model* gLight2;
-Model* gPortal;
+Model* gSphere;
 Model* gTeapot;
 
-// Two cameras now. The main camera, and the view through the portal
 Camera* gCamera;
-Camera* gPortalCamera;
+
+
+// Store lights in an array in this exercise
+const int NUM_LIGHTS = 3;
+struct Light
+{
+    Model*   model;
+    CVector3 colour;
+    float    strength;
+};
+Light gLights[NUM_LIGHTS]; 
 
 
 // Additional light information
-CVector3 gLight1Colour = { 0.8f, 0.8f, 1.0f };
-float    gLight1Strength = 20; // Allows the light to be stronger or weaker - also controls the light model scale
-
-CVector3 gLight2Colour = { 1.0f, 0.8f, 0.2f };
-float    gLight2Strength = 25;
-
 CVector3 gAmbientColour = { 0.2f, 0.2f, 0.3f }; // Background level of light (slightly bluish to match the far background, which is dark blue)
 float    gSpecularPower = 256; // Specular power controls shininess - same for all models in this app
 
-ColourRGBA gBackgroundColor = { 0.2f, 0.2f, 0.3f , 1.0f };
-
+ColourRGBA gBackgroundColor = { 0.2f, 0.2f, 0.3f, 1.0f };
 
 // Variables controlling light1's orbiting of the cube
 const float gLightOrbit = 20.0f;
 const float gLightOrbitSpeed = 0.7f;
 
+// Spotlight data - using spotlights in this lab because shadow mapping needs to treat each light as a camera, which is easy with spotlights
+float gSpotlightConeAngle = 90.0f; // Spot light cone angle (degrees), like the FOV (field-of-view) of the spot light
 
 // Lock FPS to monitor refresh rate, which will typically set it to 60fps. Press 'p' to toggle to full fps
 bool lockFPS = true;
 
 
 //--------------------------------------------------------------------------------------
-//**** Portal Texture  ****//
+//**** Shadow Texture  ****//
 //--------------------------------------------------------------------------------------
-// This texture will have the scene renderered on it. Then the texture is applied to a model
+// This texture will have the scene from the point of view of the light renderered on it. This texture is then used for shadow mapping
 
-// Dimensions of portal texture - controls quality of rendered scene in portal
-int gPortalWidth  = 256;
-int gPortalHeight = 256;
+// Dimensions of shadow map texture - controls quality of shadows
+int gShadowMapSize  = 1024;
 
-// The portal texture - each frame it is rendered to, then it is used as a texture for model
-ID3D11Texture2D*          gPortalTexture      = nullptr; // This object represents the memory used by the texture on the GPU
-ID3D11RenderTargetView*   gPortalRenderTarget = nullptr; // This object is used when we want to render to the texture above
-ID3D11ShaderResourceView* gPortalTextureSRV   = nullptr; // This object is used to give shaders access to the texture above (SRV = shader resource view)
+// The shadow texture - effectively a depth buffer of the scene **from the light's point of view**
+//                      Each frame it is rendered to, then the texture is used to help the per-pixel lighting shader identify pixels in shadow
+ID3D11Texture2D*          gShadowMap1Texture      = nullptr; // This object represents the memory used by the texture on the GPU
+ID3D11DepthStencilView*   gShadowMap1DepthStencil = nullptr; // This object is used when we want to render to the texture above **as a depth buffer**
+ID3D11ShaderResourceView* gShadowMap1SRV          = nullptr; // This object is used to give shaders access to the texture above (SRV = shader resource view)
 
-// Also need a depth/stencil buffer for the portal - it's just another kind of texture
-// NOTE: ***Can share this depth buffer between multiple portals of the same size***
-ID3D11Texture2D*        gPortalDepthStencil     = nullptr; // This object represents the memory used by the texture on the GPU
-ID3D11DepthStencilView* gPortalDepthStencilView = nullptr; // This object is used when we want to use the texture above as the depth buffer
+ID3D11Texture2D*          gShadowMap2Texture = nullptr;
+ID3D11DepthStencilView*   gShadowMap2DepthStencil = nullptr;
+ID3D11ShaderResourceView* gShadowMap2SRV = nullptr;
+
 
 //*********************//
+
 
 
 //--------------------------------------------------------------------------------------
@@ -125,26 +124,41 @@ ID3D11Buffer*     gPerModelConstantBuffer; // --"--
 //--------------------------------------------------------------------------------------
 
 // DirectX objects controlling textures used in this lab
-ID3D11Resource*           gCubeDiffuseSpecularMap    = nullptr; // This object represents the memory used by the texture on the GPU
-ID3D11ShaderResourceView* gCubeDiffuseSpecularMapSRV = nullptr; // This object is used to give shaders access to the texture above (SRV = shader resource view)
-
-ID3D11Resource*           gDecalDiffuseSpecularMap    = nullptr;
-ID3D11ShaderResourceView* gDecalDiffuseSpecularMapSRV = nullptr;
+ID3D11Resource*           gCharacterDiffuseSpecularMap    = nullptr; // This object represents the memory used by the texture on the GPU
+ID3D11ShaderResourceView* gCharacterDiffuseSpecularMapSRV = nullptr; // This object is used to give shaders access to the texture above (SRV = shader resource view)
 
 ID3D11Resource*           gCrateDiffuseSpecularMap    = nullptr;
 ID3D11ShaderResourceView* gCrateDiffuseSpecularMapSRV = nullptr;
 
-ID3D11Resource*           gSphereDiffuseSpecularMap    = nullptr;
-ID3D11ShaderResourceView* gSphereDiffuseSpecularMapSRV = nullptr;
-
 ID3D11Resource*           gGroundDiffuseSpecularMap    = nullptr;
 ID3D11ShaderResourceView* gGroundDiffuseSpecularMapSRV = nullptr;
+
+ID3D11Resource*           gSphereDiffuseSpecularMap = nullptr;
+ID3D11ShaderResourceView* gSphereDiffuseSpecularMapSRV = nullptr;
+
+ID3D11Resource*           gTeapotDiffuseSpecularMap = nullptr;
+ID3D11ShaderResourceView* gTeapotDiffuseSpecularMapSRV = nullptr;
 
 ID3D11Resource*           gLightDiffuseMap    = nullptr;
 ID3D11ShaderResourceView* gLightDiffuseMapSRV = nullptr;
 
-ID3D11Resource*           gTeapotDiffuseSpecularMap = nullptr;
-ID3D11ShaderResourceView* gTeapotDiffuseSpecularMapSRV = nullptr;
+
+
+//--------------------------------------------------------------------------------------
+// Light Helper Functions
+//--------------------------------------------------------------------------------------
+
+// Get "camera-like" view matrix for a spotlight
+CMatrix4x4 CalculateLightViewMatrix(int lightIndex)
+{
+    return InverseAffine(gLights[lightIndex].model->WorldMatrix());
+}
+
+// Get "camera-like" projection matrix for a spotlight
+CMatrix4x4 CalculateLightProjectionMatrix(int lightIndex)
+{
+    return MakeProjectionMatrix(1.0f, ToRadians(gSpotlightConeAngle)); // Helper function in Utility\GraphicsHelpers.cpp
+}
 
 
 //--------------------------------------------------------------------------------------
@@ -159,14 +173,12 @@ bool InitGeometry()
     // IMPORTANT NOTE: Will only keep the first object from the mesh - multipart objects will have parts missing - see later lab for more robust loader
     try 
     {
-        gCubeMesh   = new Mesh("Cube.x");
-        gDecalMesh  = new Mesh("Decal.x");
-        gCrateMesh  = new Mesh("CargoContainer.x");
-        gSphereMesh = new Mesh("Sphere.x");
-        gGroundMesh = new Mesh("Hills.x");
-        gLightMesh  = new Mesh("Light.x");
-        gPortalMesh = new Mesh("Portal.x");
-        gTeapotMesh = new Mesh("Teapot.x");
+        gCharacterMesh = new Mesh("Troll.x");
+        gCrateMesh     = new Mesh("CargoContainer.x");
+        gGroundMesh    = new Mesh("Hills.x");
+        gSphereMesh    = new Mesh("Sphere.x");
+        gLightMesh     = new Mesh("Light.x");
+        gTeapotMesh    = new Mesh("Teapot.x");
     }
     catch (std::runtime_error e)  // Constructors cannot return error messages so use exceptions to catch mesh errors (fairly standard approach this)
     {
@@ -201,13 +213,12 @@ bool InitGeometry()
     // The LoadTexture function requires you to pass a ID3D11Resource* (e.g. &gCubeDiffuseMap), which manages the GPU memory for the
     // texture and also a ID3D11ShaderResourceView* (e.g. &gCubeDiffuseMapSRV), which allows us to use the texture in shaders
     // The function will fill in these pointers with usable data. The variables used here are globals found near the top of the file.
-    if (!LoadTexture("StoneDiffuseSpecular.dds", &gCubeDiffuseSpecularMap,   &gCubeDiffuseSpecularMapSRV  ) ||
-        !LoadTexture("Moogle.png",               &gDecalDiffuseSpecularMap,  &gDecalDiffuseSpecularMapSRV) ||
-        !LoadTexture("CargoA.dds",               &gCrateDiffuseSpecularMap,  &gCrateDiffuseSpecularMapSRV) ||
-        !LoadTexture("Brick1.jpg",               &gSphereDiffuseSpecularMap, &gSphereDiffuseSpecularMapSRV) ||
-        !LoadTexture("GrassDiffuseSpecular.dds", &gGroundDiffuseSpecularMap, &gGroundDiffuseSpecularMapSRV ) ||
-        !LoadTexture("Flare.jpg",                &gLightDiffuseMap,          &gLightDiffuseMapSRV) || 
-        !LoadTexture("Wood2.jpg",                &gTeapotDiffuseSpecularMap, &gTeapotDiffuseSpecularMapSRV))
+    if (!LoadTexture("TrollDiffuseSpecular.dds", &gCharacterDiffuseSpecularMap, &gCharacterDiffuseSpecularMapSRV) ||
+        !LoadTexture("CargoA.dds",               &gCrateDiffuseSpecularMap,     &gCrateDiffuseSpecularMapSRV    ) ||
+        !LoadTexture("GrassDiffuseSpecular.dds", &gGroundDiffuseSpecularMap,    &gGroundDiffuseSpecularMapSRV   ) ||
+        !LoadTexture("Flare.jpg",                &gLightDiffuseMap,             &gLightDiffuseMapSRV            ) ||
+        !LoadTexture("WoodDiffuseSpecular.dds",  &gSphereDiffuseSpecularMap,    &gSphereDiffuseSpecularMapSRV   ) ||
+        !LoadTexture("TechDiffuseSpecular.dds",  &gTeapotDiffuseSpecularMap,    &gTeapotDiffuseSpecularMapSRV   ))
     {
         gLastError = "Error loading textures";
         return false;
@@ -215,87 +226,68 @@ bool InitGeometry()
 
 
 
-
-    //**** Create Portal Texture ****//
-
-	// Using a helper function to load textures from files above. Here we create the portal texture manually
-	// as we are creating a special kind of texture (one that we can render to). Many settings to prepare:
-	D3D11_TEXTURE2D_DESC portalDesc = {};
-	portalDesc.Width  = gPortalWidth;  // Size of the portal texture determines its quality
-	portalDesc.Height = gPortalHeight;
-	portalDesc.MipLevels = 1; // No mip-maps when rendering to textures (or we would have to render every level)
-	portalDesc.ArraySize = 1;
-	portalDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; // RGBA texture (8-bits each)
-	portalDesc.SampleDesc.Count = 1;
-	portalDesc.SampleDesc.Quality = 0;
-	portalDesc.Usage = D3D11_USAGE_DEFAULT;
-	portalDesc.BindFlags = D3D10_BIND_RENDER_TARGET | D3D10_BIND_SHADER_RESOURCE; // IMPORTANT: Indicate we will use texture as render target, and pass it to shaders
-	portalDesc.CPUAccessFlags = 0;
-	portalDesc.MiscFlags = 0;
-	if (FAILED( gD3DDevice->CreateTexture2D(&portalDesc, NULL, &gPortalTexture) ))
-	{
-		gLastError = "Error creating portal texture";
-		return false;
-	}
-
-	// We created the portal texture above, now we get a "view" of it as a render target, i.e. get a special pointer to the texture that
-	// we use when rendering to it (see RenderScene function below)
-	if (FAILED( gD3DDevice->CreateRenderTargetView(gPortalTexture, NULL, &gPortalRenderTarget) ))
-	{
-		gLastError = "Error creating portal render target view";
-		return false;
-	}
-
-	// We also need to send this texture (resource) to the shaders. To do that we must create a shader-resource "view"
-	D3D11_SHADER_RESOURCE_VIEW_DESC srDesc = {};
-	srDesc.Format = portalDesc.Format;
-	srDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-	srDesc.Texture2D.MostDetailedMip = 0;
-	srDesc.Texture2D.MipLevels = 1;
-	if (FAILED( gD3DDevice->CreateShaderResourceView(gPortalTexture, &srDesc, &gPortalTextureSRV) ))
-	{
-		gLastError = "Error creating portal shader resource view";
-		return false;
-	}
-
-
-	//**** Create Portal Depth Buffer ****//
+	//**** Create Shadow Map texture ****//
 
 	// We also need a depth buffer to go with our portal
-	//**** This depth buffer can be shared with any other portals of the same size
-    portalDesc = {};
-	portalDesc.Width  = gPortalWidth;
-	portalDesc.Height = gPortalHeight;
-	portalDesc.MipLevels = 1;
-	portalDesc.ArraySize = 1;
-	portalDesc.Format = DXGI_FORMAT_D32_FLOAT; // Depth buffers contain a single float per pixel
-	portalDesc.SampleDesc.Count = 1;
-	portalDesc.SampleDesc.Quality = 0;
-	portalDesc.Usage = D3D11_USAGE_DEFAULT;
-	portalDesc.BindFlags = D3D10_BIND_DEPTH_STENCIL;
-	portalDesc.CPUAccessFlags = 0;
-	portalDesc.MiscFlags = 0;
-	if (FAILED(gD3DDevice->CreateTexture2D(&portalDesc, NULL, &gPortalDepthStencil) ))
+	D3D11_TEXTURE2D_DESC textureDesc = {};
+	textureDesc.Width  = gShadowMapSize; // Size of the shadow map determines quality / resolution of shadows
+	textureDesc.Height = gShadowMapSize;
+	textureDesc.MipLevels = 1; // 1 level, means just the main texture, no additional mip-maps. Usually don't use mip-maps when rendering to textures (or we would have to render every level)
+	textureDesc.ArraySize = 1;
+	textureDesc.Format = DXGI_FORMAT_R32_TYPELESS; // The shadow map contains a single 32-bit value [tech gotcha: have to say typeless because depth buffer and shaders see things slightly differently]
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.SampleDesc.Quality = 0;
+	textureDesc.Usage = D3D11_USAGE_DEFAULT;
+	textureDesc.BindFlags = D3D10_BIND_DEPTH_STENCIL | D3D10_BIND_SHADER_RESOURCE; // Indicate we will use texture as a depth buffer and also pass it to shaders
+	textureDesc.CPUAccessFlags = 0;
+	textureDesc.MiscFlags = 0;
+	if (FAILED(gD3DDevice->CreateTexture2D(&textureDesc, NULL, &gShadowMap1Texture) ))
 	{
-		gLastError = "Error creating portal depth stencil texture";
+		gLastError = "Error creating shadow map texture";
 		return false;
 	}
-
+    if (FAILED(gD3DDevice->CreateTexture2D(&textureDesc, NULL, &gShadowMap2Texture)))
+    {
+        gLastError = "Error creating shadow map texture";
+        return false;
+    }
 	// Create the depth stencil view, i.e. indicate that the texture just created is to be used as a depth buffer
-	D3D11_DEPTH_STENCIL_VIEW_DESC portalDescDSV = {};
-	portalDescDSV.Format = portalDesc.Format;
-	portalDescDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-	portalDescDSV.Texture2D.MipSlice = 0;
-    portalDescDSV.Flags = 0;
-	if (FAILED(gD3DDevice->CreateDepthStencilView(gPortalDepthStencil, &portalDescDSV, &gPortalDepthStencilView) ))
+	D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+	dsvDesc.Format = DXGI_FORMAT_D32_FLOAT; // See "tech gotcha" above. The depth buffer sees each pixel as a "depth" float
+	dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	dsvDesc.Texture2D.MipSlice = 0;
+    dsvDesc.Flags = 0;
+	if (FAILED(gD3DDevice->CreateDepthStencilView(gShadowMap1Texture, &dsvDesc, &gShadowMap1DepthStencil) ))
 	{
-		gLastError = "Error creating portal depth stencil view";
+		gLastError = "Error creating shadow map depth stencil view";
 		return false;
 	}
+    if (FAILED(gD3DDevice->CreateDepthStencilView(gShadowMap2Texture, &dsvDesc, &gShadowMap2DepthStencil)))
+    {
+        gLastError = "Error creating shadow map depth stencil view";
+        return false;
+    }
 
-    
-    //*****************************//
-    
+   
+ 	// We also need to send this texture (resource) to the shaders. To do that we must create a shader-resource "view"
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Format = DXGI_FORMAT_R32_FLOAT; // See "tech gotcha" above. The shaders see textures as colours, so shadow map pixels are not seen as depths
+                                           // but rather as "red" floats (one float taken from RGB). Although the shader code will use the value as a depth
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.MipLevels = 1;
+	if (FAILED(gD3DDevice->CreateShaderResourceView(gShadowMap1Texture, &srvDesc, &gShadowMap1SRV) ))
+	{
+		gLastError = "Error creating shadow map shader resource view";
+		return false;
+	}
+    if (FAILED(gD3DDevice->CreateShaderResourceView(gShadowMap2Texture, &srvDesc, &gShadowMap2SRV)))
+    {
+        gLastError = "Error creating shadow map shader resource view";
+        return false;
+    }
+
+   //*****************************//
 
 
   	// Create all filtering modes, blending modes etc. used by the app (see State.cpp/.h)
@@ -315,49 +307,50 @@ bool InitScene()
 {
     //// Set up scene ////
 
-    gCube   = new Model(gCubeMesh);
-    gDecal  = new Model(gDecalMesh);
-    gCrate  = new Model(gCrateMesh);
-    gSphere = new Model(gSphereMesh);
-    gGround = new Model(gGroundMesh);
-    gLight1 = new Model(gLightMesh);
-    gLight2 = new Model(gLightMesh);
-    gPortal = new Model(gPortalMesh);
-    gTeapot = new Model(gTeapotMesh);
+    gCharacter = new Model(gCharacterMesh);
+    gCrate     = new Model(gCrateMesh);
+    gGround    = new Model(gGroundMesh);
+    gSphere    = new Model(gSphereMesh);
+    gTeapot    = new Model(gTeapotMesh);
 
 	// Initial positions
-	gCube->  SetPosition({  0, 15,  0 });
-	gDecal-> SetPosition({  0, 15,  -0.03 });
-	gSphere->SetPosition({ 30, 10,  60 });
-	gCrate-> SetPosition({-10,  0, 90 });
-	gCrate-> SetScale( 6.0f );
-	gCrate-> SetRotation({ 0.0f, ToRadians(40.0f), 0.0f });
-	gPortal->SetPosition({ 40, 20, 40 });
-	gPortal->SetRotation({ 0.0f, ToRadians(-130.0f), 0.0f });
-
-    gTeapot->SetPosition({ 20, 10, 30 });
-    gTeapot->SetRotation({ 0.0f, ToRadians(-130.0f), 0.0f });
-
-    gLight1->SetPosition({ 30, 30, 10 });
-    gLight1->SetScale(pow(gLight1Strength, 0.7f)); // Convert light strength into a nice value for the scale of the light - equation is ad-hoc.
-    gLight2->SetPosition({ -20, 30, 40 });
-    gLight2->SetScale(pow(gLight2Strength, 0.7f));
+	gCharacter->SetPosition({ -10, 5, 50 });
+    gCharacter->SetScale(6);
+    gCharacter->SetRotation({ 0, ToRadians(20), 0 });
+	gCrate-> SetPosition({ 58, 4, 80 });
+	gCrate-> SetScale(6);
+	gCrate-> SetRotation({ 0.0f, ToRadians(-180.0f), 0.0f });
+    gSphere->SetPosition({ 70, 15, -60 });
+    gTeapot->SetPosition({ 20, 5, 50 });
 
 
-    //// Set up cameras ////
+    // Light set-up - using an array this time
+    for (int i = 0; i < NUM_LIGHTS; ++i)
+    {
+        gLights[i].model = new Model(gLightMesh);
+    }
+
+    gLights[0].colour = { 0.8f, 0.8f, 1.0f };
+    gLights[0].strength = 10;
+    gLights[0].model->SetPosition({ 30, 20, 0 });
+    gLights[0].model->SetScale(pow(gLights[0].strength, 0.7f)); // Convert light strength into a nice value for the scale of the light - equation is ad-hoc.
+	gLights[0].model->FaceTarget(gCharacter->Position());
+
+    gLights[1].colour = { 1.0f, 0.8f, 0.2f };
+    gLights[1].strength = 40;
+    gLights[1].model->SetPosition({ -15, 40, 120 });
+    gLights[1].model->SetScale(pow(gLights[1].strength, 0.7f));
+	gLights[1].model->FaceTarget({ gTeapot->Position() });
+
+    gLights[2].colour = { 1.0f, 0.8f, 0.2f };
+    gLights[2].strength = 15;
+    gLights[2].model->SetPosition({ 50, 70, -90 });
+    gLights[2].model->SetScale(pow(gLights[2].strength, 0.7f));
+    //// Set up camera ////
 
     gCamera = new Camera();
-    gCamera->SetPosition({ 40, 30, -90 });
-    gCamera->SetRotation({ ToRadians(8.0f), ToRadians(-18.0f), 0.0f });
-	gCamera->SetNearClip( 0.2f );
-	gCamera->SetFarClip( 500.0f );
-
-
-  	//**** Portal camera is the view shown in the portal object's texture ****//
-	gPortalCamera = new Camera();
-	gPortalCamera->SetPosition({ 45, 45, 85 });
-	gPortalCamera->SetRotation({ ToRadians(20.0f), ToRadians(215.0f), 0 });
-
+    gCamera->SetPosition({ 25, 30, 160 });
+    gCamera->SetRotation({ ToRadians(10), ToRadians(180), 0 });
 
     return true;
 }
@@ -368,24 +361,23 @@ void ReleaseResources()
 {
     ReleaseStates();
 
-    if (gPortalDepthStencilView)  gPortalDepthStencilView->Release();
-    if (gPortalDepthStencil)      gPortalDepthStencil->Release();
-    if (gPortalTextureSRV)        gPortalTextureSRV->Release();
-    if (gPortalRenderTarget)      gPortalRenderTarget->Release();
-    if (gPortalTexture)           gPortalTexture->Release();
+    if (gShadowMap1DepthStencil)  gShadowMap1DepthStencil->Release();
+    if (gShadowMap1SRV)           gShadowMap1SRV->Release();
+    if (gShadowMap1Texture)       gShadowMap1Texture->Release();
+    if (gShadowMap2DepthStencil)  gShadowMap2DepthStencil->Release();
+    if (gShadowMap2SRV)           gShadowMap2SRV->Release();
+    if (gShadowMap2Texture)       gShadowMap2Texture->Release();
 
-    if (gLightDiffuseMapSRV)           gLightDiffuseMapSRV->Release();
-    if (gLightDiffuseMap)              gLightDiffuseMap->Release();
-    if (gGroundDiffuseSpecularMapSRV)  gGroundDiffuseSpecularMapSRV->Release();
-    if (gGroundDiffuseSpecularMap)     gGroundDiffuseSpecularMap->Release();
-    if (gSphereDiffuseSpecularMapSRV)  gSphereDiffuseSpecularMapSRV->Release();
-    if (gSphereDiffuseSpecularMap)     gSphereDiffuseSpecularMap->Release();
-    if (gCrateDiffuseSpecularMapSRV)   gCrateDiffuseSpecularMapSRV->Release();
-    if (gCrateDiffuseSpecularMap)      gCrateDiffuseSpecularMap->Release();
-    if (gDecalDiffuseSpecularMapSRV)   gDecalDiffuseSpecularMapSRV->Release();
-    if (gDecalDiffuseSpecularMap)      gDecalDiffuseSpecularMap->Release();
-    if (gCubeDiffuseSpecularMapSRV)    gCubeDiffuseSpecularMapSRV->Release();
-    if (gCubeDiffuseSpecularMap)       gCubeDiffuseSpecularMap->Release();
+    if (gLightDiffuseMapSRV)             gLightDiffuseMapSRV->Release();
+    if (gLightDiffuseMap)                gLightDiffuseMap->Release();
+    if (gGroundDiffuseSpecularMapSRV)    gGroundDiffuseSpecularMapSRV->Release();
+    if (gGroundDiffuseSpecularMap)       gGroundDiffuseSpecularMap->Release();
+    if (gCrateDiffuseSpecularMapSRV)     gCrateDiffuseSpecularMapSRV->Release();
+    if (gCrateDiffuseSpecularMap)        gCrateDiffuseSpecularMap->Release();
+    if (gCharacterDiffuseSpecularMapSRV) gCharacterDiffuseSpecularMapSRV->Release();
+    if (gCharacterDiffuseSpecularMap)    gCharacterDiffuseSpecularMap->Release();
+    if (gSphereDiffuseSpecularMapSRV)    gSphereDiffuseSpecularMapSRV->Release();
+    if (gSphereDiffuseSpecularMap)       gSphereDiffuseSpecularMap->Release();
     if (gTeapotDiffuseSpecularMapSRV)    gTeapotDiffuseSpecularMapSRV->Release();
     if (gTeapotDiffuseSpecularMap)       gTeapotDiffuseSpecularMap->Release();
 
@@ -395,28 +387,23 @@ void ReleaseResources()
     ReleaseShaders();
 
     // See note in InitGeometry about why we're not using unique_ptr and having to manually delete
-    delete gCamera;        gCamera       = nullptr;
-    delete gPortalCamera;  gPortalCamera = nullptr;
+    for (int i = 0; i < NUM_LIGHTS; ++i)
+    {
+        delete gLights[i].model;  gLights[i].model = nullptr;
+    }
+    delete gCamera;    gCamera    = nullptr;
+    delete gGround;    gGround    = nullptr;
+    delete gCrate;     gCrate     = nullptr;
+    delete gCharacter; gCharacter = nullptr;
+    delete gSphere;    gSphere    = nullptr;
+    delete gTeapot;    gTeapot    = nullptr;
 
-    delete gPortal;  gPortal = nullptr;
-    delete gLight1;  gLight1 = nullptr;
-    delete gLight2;  gLight2 = nullptr;
-    delete gGround;  gGround = nullptr;
-    delete gSphere;  gSphere = nullptr;
-    delete gCrate;   gCrate  = nullptr;
-    delete gDecal;   gDecal  = nullptr;
-    delete gCube;    gCube   = nullptr;
-    delete gTeapot;    gTeapot = nullptr;
-
-    delete gPortalMesh;  gPortalMesh = nullptr;
-    delete gLightMesh;   gLightMesh  = nullptr;
-    delete gGroundMesh;  gGroundMesh = nullptr;
-    delete gSphereMesh;  gSphereMesh = nullptr;
-    delete gCrateMesh;   gCrateMesh  = nullptr;
-    delete gDecalMesh;   gDecalMesh  = nullptr;
-    delete gCubeMesh;    gCubeMesh   = nullptr;
-    delete gTeapotMesh;    gTeapotMesh = nullptr;
-
+    delete gLightMesh;     gLightMesh     = nullptr;
+    delete gGroundMesh;    gGroundMesh    = nullptr;
+    delete gCrateMesh;     gCrateMesh     = nullptr;
+    delete gCharacterMesh; gCharacterMesh = nullptr;
+    delete gSphereMesh;    gSphereMesh    = nullptr;
+    delete gTeapotMesh;    gTeapotMesh    = nullptr;
 }
 
 
@@ -424,6 +411,40 @@ void ReleaseResources()
 //--------------------------------------------------------------------------------------
 // Scene Rendering
 //--------------------------------------------------------------------------------------
+
+// Render the scene from the given light's point of view. Only renders depth buffer
+void RenderDepthBufferFromLight(int lightIndex)
+{
+    // Get camera-like matrices from the spotlight, seet in the constant buffer and send over to GPU
+    gPerFrameConstants.viewMatrix           = CalculateLightViewMatrix(lightIndex);
+    gPerFrameConstants.projectionMatrix     = CalculateLightProjectionMatrix(lightIndex);
+    gPerFrameConstants.viewProjectionMatrix = gPerFrameConstants.viewMatrix * gPerFrameConstants.projectionMatrix;
+    UpdateConstantBuffer(gPerFrameConstantBuffer, gPerFrameConstants);
+
+    // Indicate that the constant buffer we just updated is for use in the vertex shader (VS) and pixel shader (PS)
+    gD3DContext->VSSetConstantBuffers(0, 1, &gPerFrameConstantBuffer); // First parameter must match constant buffer number in the shader 
+    gD3DContext->PSSetConstantBuffers(0, 1, &gPerFrameConstantBuffer);
+
+
+    //// Only render models that cast shadows ////
+
+    // Use special depth-only rendering shaders
+    gD3DContext->VSSetShader(gBasicTransformVertexShader, nullptr, 0);
+    gD3DContext->PSSetShader(gDepthOnlyPixelShader,       nullptr, 0);
+    
+    // States - no blending, normal depth buffer and culling
+    gD3DContext->OMSetBlendState(gNoBlendingState, nullptr, 0xffffff);
+    gD3DContext->OMSetDepthStencilState(gUseDepthBufferState, 0);
+    gD3DContext->RSSetState(gCullBackState);
+
+    // Render models - no state changes required between each object in this situation (no textures used in this step)
+    gGround->Render();
+    gCharacter->Render();
+    gCrate->Render();
+    gSphere->Render();
+    gTeapot->Render();
+}
+
 
 
 // Render everything in the scene from the given camera
@@ -442,7 +463,7 @@ void RenderSceneFromCamera(Camera* camera)
     gD3DContext->PSSetConstantBuffers(0, 1, &gPerFrameConstantBuffer);
 
 
-    //// Render lit models - ground first ////
+    //// Render lit models ////
 
     // Select which shaders to use next
     gD3DContext->VSSetShader(gPixelLightingVertexShader, nullptr, 0);
@@ -461,28 +482,26 @@ void RenderSceneFromCamera(Camera* camera)
     // the Mesh render function, which will set up vertex & index buffer before finally calling Draw on the GPU
     gGround->Render();
 
-
-    //// Render other lit models next ////
-    // No change to shaders and states - only change textures for each one (texture sampler also stays the same)
-
-    gD3DContext->PSSetShaderResources(0, 1, &gCubeDiffuseSpecularMapSRV); 
-    gCube->Render();
+    // Render other lit models, only change textures for each onee
+    gD3DContext->PSSetShaderResources(0, 1, &gCharacterDiffuseSpecularMapSRV); 
+    gCharacter->Render();
 
     gD3DContext->PSSetShaderResources(0, 1, &gCrateDiffuseSpecularMapSRV);
     gCrate->Render();
 
+    //Render Sphere
     gD3DContext->PSSetShaderResources(0, 1, &gSphereDiffuseSpecularMapSRV);
     gSphere->Render();
 
+    //Render Teapot
     gD3DContext->PSSetShaderResources(0, 1, &gTeapotDiffuseSpecularMapSRV);
     gTeapot->Render();
 
     //// Render lights ////
-    // Rendered with different shaders, textures, states from other models
 
     // Select which shaders to use next
-    gD3DContext->VSSetShader(gLightModelVertexShader, nullptr, 0);
-    gD3DContext->PSSetShader(gLightModelPixelShader,  nullptr, 0);
+    gD3DContext->VSSetShader(gBasicTransformVertexShader, nullptr, 0);
+    gD3DContext->PSSetShader(gLightModelPixelShader,      nullptr, 0);
 
     // Select the texture and sampler to use in the pixel shader
     gD3DContext->PSSetShaderResources(0, 1, &gLightDiffuseMapSRV); // First parameter must match texture slot number in the shaer
@@ -493,13 +512,12 @@ void RenderSceneFromCamera(Camera* camera)
     gD3DContext->OMSetDepthStencilState(gDepthReadOnlyState, 0);
     gD3DContext->RSSetState(gCullNoneState);
 
-    // Render model, sets world matrix, vertex and index buffer and calls Draw on the GPU
-    gPerModelConstants.objectColour = gLight1Colour; // Set any per-model constants apart from the world matrix just before calling render (light colour here)
-    gLight1->Render();
-
-    // The shaders, texture and states are the same, so no need to set them again to draw the second light
-    gPerModelConstants.objectColour = gLight2Colour;
-    gLight2->Render();
+    // Render all the lights in the array
+    for (int i = 0; i < NUM_LIGHTS; ++i)
+    {
+        gPerModelConstants.objectColour = gLights[i].colour; // Set any per-model constants apart from the world matrix just before calling render (light colour here)
+        gLights[i].model->Render();
+    }
 }
 
 
@@ -509,52 +527,69 @@ void RenderSceneFromCamera(Camera* camera)
 // Then it renders the main scene using the portal texture on a model.
 void RenderScene()
 {
-    //// Common settings for both main scene and portal scene ////
+    //// Common settings ////
 
-    // Set up the light information in the constant buffer - this is the same for portal and main render
+    // Set up the light information in the constant buffer
     // Don't send to the GPU yet, the function RenderSceneFromCamera will do that
-    gPerFrameConstants.light1Colour   = gLight1Colour * gLight1Strength;
-    gPerFrameConstants.light1Position = gLight1->Position();
-    gPerFrameConstants.light2Colour   = gLight2Colour * gLight2Strength;
-    gPerFrameConstants.light2Position = gLight2->Position();
+    gPerFrameConstants.light1Colour   = gLights[0].colour * gLights[0].strength;
+    gPerFrameConstants.light1Position = gLights[0].model->Position();
+    gPerFrameConstants.light1Facing   = Normalise(gLights[0].model->WorldMatrix().GetZAxis());    // Additional lighting information for spotlights
+    gPerFrameConstants.light1CosHalfAngle = cos(ToRadians(gSpotlightConeAngle / 2)); // --"--
+    gPerFrameConstants.light1ViewMatrix       = CalculateLightViewMatrix(0);         // Calculate camera-like matrices for...
+    gPerFrameConstants.light1ProjectionMatrix = CalculateLightProjectionMatrix(0);   //...lights to support shadow mapping
+
+    gPerFrameConstants.light2Colour = gLights[1].colour * gLights[1].strength;
+    gPerFrameConstants.light2Position = gLights[1].model->Position();
+    gPerFrameConstants.light2Facing = Normalise(gLights[1].model->WorldMatrix().GetZAxis());    // Additional lighting information for spotlights
+    gPerFrameConstants.light2CosHalfAngle = cos(ToRadians(gSpotlightConeAngle / 2)); // --"--
+    gPerFrameConstants.light2ViewMatrix = CalculateLightViewMatrix(1);         // Calculate camera-like matrices for...
+    gPerFrameConstants.light2ProjectionMatrix = CalculateLightProjectionMatrix(1);   //...lights to support shadow mapping
+
+    gPerFrameConstants.light3Colour = gLights[2].colour * gLights[2].strength;
+    gPerFrameConstants.light3Position = gLights[2].model->Position();
+
     gPerFrameConstants.ambientColour  = gAmbientColour;
     gPerFrameConstants.specularPower  = gSpecularPower;
     gPerFrameConstants.cameraPosition = gCamera->Position();
 
 
-    //-------------------------------------------------------------------------
+    //***************************************//
+    //// Render from light's point of view ////
+    
+    // Only rendering from light 1 to begin with
 
-
-    //// Portal scene rendering ////
-
-    // Set the portal texture and portal depth buffer as the targets for rendering
-    // The portal texture will later be used on models in the main scene
-    gD3DContext->OMSetRenderTargets(1, &gPortalRenderTarget, gPortalDepthStencilView);
-
-    // Clear the portal texture to a fixed colour and the portal depth buffer to the far distance
-    gD3DContext->ClearRenderTargetView(gPortalRenderTarget, &gBackgroundColor.r);
-    gD3DContext->ClearDepthStencilView(gPortalDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-
-    // Setup the viewport for the portal texture size
+    // Setup the viewport to the size of the shadow map texture
     D3D11_VIEWPORT vp;
-    vp.Width  = static_cast<FLOAT>(gPortalWidth);
-    vp.Height = static_cast<FLOAT>(gPortalHeight);
+    vp.Width  = static_cast<FLOAT>(gShadowMapSize);
+    vp.Height = static_cast<FLOAT>(gShadowMapSize);
     vp.MinDepth = 0.0f;
     vp.MaxDepth = 1.0f;
     vp.TopLeftX = 0;
     vp.TopLeftY = 0;
     gD3DContext->RSSetViewports(1, &vp);
 
-    // Render the scene for the portal
-    RenderSceneFromCamera(gPortalCamera);
+    // Select the shadow map texture as the current depth buffer. We will not be rendering any pixel colours
+    // Also clear the the shadow map depth buffer to the far distance
+    gD3DContext->OMSetRenderTargets(0, nullptr, gShadowMap1DepthStencil);
+    gD3DContext->ClearDepthStencilView(gShadowMap1DepthStencil, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
+    // Render the scene from the point of view of light 1 (only depth values written)
+    RenderDepthBufferFromLight(0);
 
-    //-------------------------------------------------------------------------
+    // Select the shadow map texture as the current depth buffer. We will not be rendering any pixel colours
+    // Also clear the the shadow map depth buffer to the far distance
+    gD3DContext->OMSetRenderTargets(0, nullptr, gShadowMap2DepthStencil);
+    gD3DContext->ClearDepthStencilView(gShadowMap2DepthStencil, D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+    // Render the scene from the point of view of light 2 (only depth values written)
+    RenderDepthBufferFromLight(1);
+
+    //**************************//
 
 
     //// Main scene rendering ////
 
-    // Now set the back buffer as the target for rendering and select the main depth buffer.
+    // Set the back buffer as the target for rendering and select the main depth buffer.
     // When finished the back buffer is sent to the "front buffer" - which is the monitor.
     gD3DContext->OMSetRenderTargets(1, &gBackBufferRenderTarget, gDepthStencil);
 
@@ -571,11 +606,28 @@ void RenderScene()
     vp.TopLeftY = 0;
     gD3DContext->RSSetViewports(1, &vp);
 
+    // Set shadow maps in shaders
+    // First parameter is the "slot", must match the Texture2D declaration in the HLSL code
+    // In this app the diffuse map uses slot 0, the shadow maps use slots 1 onwards. If we were using other maps (e.g. normal map) then
+    // we might arrange things differently
+    gD3DContext->PSSetShaderResources(1, 1, &gShadowMap1SRV);
+    gD3DContext->PSSetShaderResources(2, 1, &gShadowMap2SRV);
+    gD3DContext->PSSetSamplers(1, 1, &gTrilinearSampler);
+
     // Render the scene for the main window
     RenderSceneFromCamera(gCamera);
 
+    // Unbind shadow maps from shaders - prevents warnings from DirectX when we try to render to the shadow maps again next frame
+    ID3D11ShaderResourceView* nullView = nullptr;
+    gD3DContext->PSSetShaderResources(1, 1, &nullView);
 
-    //-------------------------------------------------------------------------
+
+    //*****************************//
+    // Temporary demonstration code for visualising the light's view of the scene
+    //ColourRGBA white = {1,1,1};
+    //gD3DContext->ClearRenderTargetView(gBackBufferRenderTarget, &white.r);
+    //RenderDepthBufferFromLight(0);
+    //*****************************//
 
 
     //// Scene completion ////
@@ -594,36 +646,36 @@ void RenderScene()
 void UpdateScene(float frameTime)
 {
 	// Control sphere (will update its world matrix)
-	gSphere->Control(frameTime, Key_I, Key_K, Key_J, Key_L, Key_U, Key_O, Key_Period, Key_Comma );
+	gCharacter->Control(frameTime, Key_I, Key_K, Key_J, Key_L, Key_U, Key_O, Key_Period, Key_Comma );
 
     // Orbit the light - a bit of a cheat with the static variable [ask the tutor if you want to know what this is]
-	//static float rotate = 0.0f;
-	//gLight1->SetPosition( gCube->Position() + CVector3{ cos(rotate) * gLightOrbit, 0.0f, sin(rotate) * gLightOrbit } );
-	//rotate -= gLightOrbitSpeed * frameTime;
-
-	// Control camera (will update its view matrix)
-	gCamera->Control(frameTime, Key_Up, Key_Down, Key_Left, Key_Right, Key_W, Key_S, Key_A, Key_D );
+	static float rotate = 0.0f;
+    static bool go = true;
+	gLights[0].model->SetPosition( gCharacter->Position() + CVector3{ cos(rotate) * gLightOrbit, 10, sin(rotate) * gLightOrbit } );
+	gLights[0].model->FaceTarget(gCharacter->Position());
+    if (go)  rotate -= gLightOrbitSpeed * frameTime;
+    if (KeyHit(Key_1))  go = !go;
 
     //Pulse light 1 on and off
     static bool lightOn = true;
 
     if (lightOn)
     {
-        gLight1Strength += 0.05;
-        if (gLight1Strength >= 20)
+        gLights[0].strength += 0.05;
+        if (gLights[0].strength >= 20)
         {
             lightOn = false;
         }
     }
     else
     {
-        gLight1Strength += -0.05;
-        if (gLight1Strength <= 0)
+        gLights[0].strength += -0.05;
+        if (gLights[0].strength <= 0.05)
         {
             lightOn = true;
         }
     }
-    gLight1->SetScale(pow(gLight1Strength, 0.7f));
+    gLights[0].model->SetScale(pow(gLights[0].strength, 0.7f));
 
     //Change light 2 colour
     static float r = 0.2;
@@ -639,9 +691,9 @@ void UpdateScene(float frameTime)
         if (b > 0.2)
         {
             b = b - 0.001;
-        }        
+        }
         if (r >= 1)
-        {            
+        {
             redCycle = true;
         }
     }
@@ -676,7 +728,14 @@ void UpdateScene(float frameTime)
         blueCycle = false;
     }
 
-    gLight2Colour = { r, g, b };
+    gLights[1].colour = { r, g, b };
+
+
+
+
+	// Control camera (will update its view matrix)
+	gCamera->Control(frameTime, Key_Up, Key_Down, Key_Left, Key_Right, Key_W, Key_S, Key_A, Key_D );
+
 
     // Toggle FPS limiting
     if (KeyHit(Key_P))  lockFPS = !lockFPS;
@@ -694,7 +753,7 @@ void UpdateScene(float frameTime)
         std::ostringstream frameTimeMs;
         frameTimeMs.precision(2);
         frameTimeMs << std::fixed << avgFrameTime * 1000;
-        std::string windowTitle = "CO2409 Week 18: Render to Texture - Frame Time: " + frameTimeMs.str() +
+        std::string windowTitle = "CO2409 Week 20: Shadow Mapping - Frame Time: " + frameTimeMs.str() +
                                   "ms, FPS: " + std::to_string(static_cast<int>(1 / avgFrameTime + 0.5f));
         SetWindowTextA(gHWnd, windowTitle.c_str());
         totalFrameTime = 0;

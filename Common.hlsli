@@ -62,24 +62,36 @@ cbuffer PerFrameConstants : register(b0) // The b0 gives this constant buffer th
     float4x4 gViewProjectionMatrix; // The above two matrices multiplied together to combine their effects
 
     float3   gLight1Position; // 3 floats: x, y z
-    float    padding1;        // IMPORTANT technical point: shaders work with float4 values. If constant buffer variables don't align
-                              // to the size of a float4 then HLSL (GPU) will insert padding, which can cause problems matching 
-                              // structure between C++ and GPU. So add these unused padding variables to both HLSL and C++ structures.
+    float    padding1;        // Pad above variable to float4 (HLSL requirement - copied in the the C++ version of this structure)
     float3   gLight1Colour;
     float    padding2;
+    float3   gLight1Facing;           // Spotlight facing direction (normal)
+    float    gLight1CosHalfAngle;     // cos(Spot light cone angle / 2). Precalculate in C++ the spotlight angle in this form to save doing in the shader
+    float4x4 gLight1ViewMatrix;       // For shadow mapping we treat lights like cameras so we need camera matrices for them (prepared on the C++ side)
+    float4x4 gLight1ProjectionMatrix; // --"--
 
     float3   gLight2Position;
     float    padding3;
     float3   gLight2Colour;
     float    padding4;
+    float3   gLight2Facing;
+    float    gLight2CosHalfAngle;
+    float4x4 gLight2ViewMatrix;
+    float4x4 gLight2ProjectionMatrix;
+
+    float3   gLight3Position;
+    float    padding7;
+    float3   gLight3Colour;
+    float    padding8;
 
     float3   gAmbientColour;
-    float    gSpecularPower;  // In this case we actually have a useful float variable that we can use to pad to a float4
+    float    gSpecularPower;
 
     float3   gCameraPosition;
     float    padding5;
 }
 // Note constant buffers are not structs: we don't use the name of the constant buffer, these are really just a collection of global variables (hence the 'g')
+
 
 
 // If we have multiple models then we need to update the world matrix from C++ to GPU multiple times per frame because we

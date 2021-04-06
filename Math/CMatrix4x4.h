@@ -39,7 +39,7 @@ public:
     CVector3 GetYAxis() const { return GetRow(1); }
     CVector3 GetZAxis() const { return GetRow(2); }
     CVector3 GetPosition() const  { return GetRow(3); }
-
+    CVector3 GetEulerAngles();
     CVector3 GetScale() const  { return { Length(GetXAxis()), Length(GetYAxis()) , Length(GetZAxis()) }; }
 
     // Post-multiply this matrix by the given one

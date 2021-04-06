@@ -58,17 +58,18 @@ void Model::Control(float frameTime, KeyCode turnUp, KeyCode turnDown, KeyCode t
 	}
 
 	// Local Z movement - move in the direction of the Z axis, get axis from world matrix
+    CVector3 localZDir = Normalise({ mWorldMatrix.e20, mWorldMatrix.e21, mWorldMatrix.e22 }); // normalise axis in case world matrix has scaling
 	if (KeyHeld( moveForward ))
 	{
-		mPosition.x += mWorldMatrix.e20 * MOVEMENT_SPEED * frameTime;
-		mPosition.y += mWorldMatrix.e21 * MOVEMENT_SPEED * frameTime;
-		mPosition.z += mWorldMatrix.e22 * MOVEMENT_SPEED * frameTime;
+		mPosition.x += localZDir.x * MOVEMENT_SPEED * frameTime;
+		mPosition.y += localZDir.y * MOVEMENT_SPEED * frameTime;
+		mPosition.z += localZDir.z * MOVEMENT_SPEED * frameTime;
 	}
 	if (KeyHeld( moveBackward ))
 	{
-		mPosition.x -= mWorldMatrix.e20 * MOVEMENT_SPEED * frameTime;
-		mPosition.y -= mWorldMatrix.e21 * MOVEMENT_SPEED * frameTime;
-		mPosition.z -= mWorldMatrix.e22 * MOVEMENT_SPEED * frameTime;
+		mPosition.x -= localZDir.x * MOVEMENT_SPEED * frameTime;
+		mPosition.y -= localZDir.y * MOVEMENT_SPEED * frameTime;
+		mPosition.z -= localZDir.z * MOVEMENT_SPEED * frameTime;
 	}
 }
 
