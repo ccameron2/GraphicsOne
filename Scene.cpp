@@ -42,12 +42,14 @@ Mesh* gGroundMesh;
 Mesh* gSphereMesh;
 Mesh* gLightMesh;
 Mesh* gTeapotMesh;
+Mesh* gCubeMesh;
 
 Model* gCharacter;
 Model* gCrate;
 Model* gGround;
 Model* gSphere;
 Model* gTeapot;
+Model* gCube;
 
 Camera* gCamera;
 
@@ -139,6 +141,12 @@ ID3D11ShaderResourceView* gSphereDiffuseSpecularMapSRV = nullptr;
 ID3D11Resource*           gTeapotDiffuseSpecularMap = nullptr;
 ID3D11ShaderResourceView* gTeapotDiffuseSpecularMapSRV = nullptr;
 
+ID3D11Resource*           gCubeDiffuseSpecularMap = nullptr;
+ID3D11ShaderResourceView* gCubeDiffuseSpecularMapSRV = nullptr;
+
+ID3D11Resource*           gCube2DiffuseSpecularMap = nullptr;
+ID3D11ShaderResourceView* gCube2DiffuseSpecularMapSRV = nullptr;
+
 ID3D11Resource*           gLightDiffuseMap    = nullptr;
 ID3D11ShaderResourceView* gLightDiffuseMapSRV = nullptr;
 
@@ -179,6 +187,7 @@ bool InitGeometry()
         gSphereMesh    = new Mesh("Sphere.x");
         gLightMesh     = new Mesh("Light.x");
         gTeapotMesh    = new Mesh("Teapot.x");
+        gCubeMesh      = new Mesh("Cube.x");
     }
     catch (std::runtime_error e)  // Constructors cannot return error messages so use exceptions to catch mesh errors (fairly standard approach this)
     {
@@ -218,7 +227,9 @@ bool InitGeometry()
         !LoadTexture("GrassDiffuseSpecular.dds", &gGroundDiffuseSpecularMap,    &gGroundDiffuseSpecularMapSRV   ) ||
         !LoadTexture("Flare.jpg",                &gLightDiffuseMap,             &gLightDiffuseMapSRV            ) ||
         !LoadTexture("WoodDiffuseSpecular.dds",  &gSphereDiffuseSpecularMap,    &gSphereDiffuseSpecularMapSRV   ) ||
-        !LoadTexture("TechDiffuseSpecular.dds",  &gTeapotDiffuseSpecularMap,    &gTeapotDiffuseSpecularMapSRV   ))
+        !LoadTexture("TechDiffuseSpecular.dds",  &gTeapotDiffuseSpecularMap,    &gTeapotDiffuseSpecularMapSRV   ) ||
+        !LoadTexture("WoodDiffuseSpecular.dds",  &gCubeDiffuseSpecularMap,      &gCubeDiffuseSpecularMapSRV     ) ||
+        !LoadTexture("CobbleDiffuseSpecular.dds",&gCube2DiffuseSpecularMap,     &gCube2DiffuseSpecularMapSRV))
     {
         gLastError = "Error loading textures";
         return false;
@@ -312,17 +323,19 @@ bool InitScene()
     gGround    = new Model(gGroundMesh);
     gSphere    = new Model(gSphereMesh);
     gTeapot    = new Model(gTeapotMesh);
+    gCube      = new Model(gCubeMesh);
 
 	// Initial positions
 	gCharacter->SetPosition({ -10, 5, 50 });
     gCharacter->SetScale(6);
     gCharacter->SetRotation({ 0, ToRadians(20), 0 });
-	gCrate-> SetPosition({ 58, 4, 80 });
-	gCrate-> SetScale(6);
-	gCrate-> SetRotation({ 0.0f, ToRadians(-180.0f), 0.0f });
+	gCrate->SetPosition({ 58, 4, 80 });
+	gCrate->SetScale(6);
+	gCrate->SetRotation({ 0.0f, ToRadians(-180.0f), 0.0f });
     gSphere->SetPosition({ 70, 15, -60 });
     gTeapot->SetPosition({ 20, 5, 50 });
-
+    gCube->SetPosition({ 40, 15, -60 });
+    gCube->SetScale(2);
 
     // Light set-up - using an array this time
     for (int i = 0; i < NUM_LIGHTS; ++i)
@@ -380,6 +393,8 @@ void ReleaseResources()
     if (gSphereDiffuseSpecularMap)       gSphereDiffuseSpecularMap->Release();
     if (gTeapotDiffuseSpecularMapSRV)    gTeapotDiffuseSpecularMapSRV->Release();
     if (gTeapotDiffuseSpecularMap)       gTeapotDiffuseSpecularMap->Release();
+    if (gCubeDiffuseSpecularMapSRV)      gCubeDiffuseSpecularMapSRV->Release();
+    if (gCube2DiffuseSpecularMap)         gCube2DiffuseSpecularMap->Release();
 
     if (gPerModelConstantBuffer)  gPerModelConstantBuffer->Release();
     if (gPerFrameConstantBuffer)  gPerFrameConstantBuffer->Release();
@@ -397,6 +412,7 @@ void ReleaseResources()
     delete gCharacter; gCharacter = nullptr;
     delete gSphere;    gSphere    = nullptr;
     delete gTeapot;    gTeapot    = nullptr;
+    delete gCube;      gCube      = nullptr;
 
     delete gLightMesh;     gLightMesh     = nullptr;
     delete gGroundMesh;    gGroundMesh    = nullptr;
@@ -404,6 +420,7 @@ void ReleaseResources()
     delete gCharacterMesh; gCharacterMesh = nullptr;
     delete gSphereMesh;    gSphereMesh    = nullptr;
     delete gTeapotMesh;    gTeapotMesh    = nullptr;
+    delete gCube;          gCubeMesh      = nullptr;
 }
 
 
@@ -443,6 +460,7 @@ void RenderDepthBufferFromLight(int lightIndex)
     gCrate->Render();
     gSphere->Render();
     gTeapot->Render();
+    gCube->Render();
 }
 
 
@@ -489,13 +507,27 @@ void RenderSceneFromCamera(Camera* camera)
     gD3DContext->PSSetShaderResources(0, 1, &gCrateDiffuseSpecularMapSRV);
     gCrate->Render();
 
-    //Render Sphere
-    gD3DContext->PSSetShaderResources(0, 1, &gSphereDiffuseSpecularMapSRV);
-    gSphere->Render();
-
     //Render Teapot
     gD3DContext->PSSetShaderResources(0, 1, &gTeapotDiffuseSpecularMapSRV);
     gTeapot->Render();
+
+    //Set Sphere Shaders
+    gD3DContext->VSSetShader(gSphereVertexShader, nullptr, 0);
+    gD3DContext->PSSetShader(gSpherePixelShader, nullptr, 0);
+
+    //Render Sphere
+    gD3DContext->PSSetShaderResources(0, 1, &gSphereDiffuseSpecularMapSRV);
+    gSphere->Render();
+    
+    //Set Cube Shaders
+    gD3DContext->VSSetShader(gPixelLightingVertexShader, nullptr, 0);
+    gD3DContext->PSSetShader(gCubePixelShader, nullptr, 0);
+
+    //Render Cube
+    gD3DContext->PSSetShaderResources(0, 1, &gCubeDiffuseSpecularMapSRV);
+    gD3DContext->PSSetShaderResources(3, 1, &gCube2DiffuseSpecularMapSRV);
+
+    gCube->Render();
 
     //// Render lights ////
 
@@ -655,6 +687,9 @@ void UpdateScene(float frameTime)
 	gLights[0].model->FaceTarget(gCharacter->Position());
     if (go)  rotate -= gLightOrbitSpeed * frameTime;
     if (KeyHit(Key_1))  go = !go;
+
+    //Create create wiggle variable
+    gPerFrameConstants.wiggle += 8 * frameTime;
 
     //Pulse light 1 on and off
     static bool lightOn = true;

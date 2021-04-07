@@ -18,9 +18,12 @@
 ID3D11VertexShader* gPixelLightingVertexShader = nullptr;
 ID3D11PixelShader*  gPixelLightingPixelShader  = nullptr;
 ID3D11VertexShader* gBasicTransformVertexShader = nullptr; // Used before light model and depth-only pixel shader
+ID3D11VertexShader* gSphereVertexShader = nullptr;
+
 ID3D11PixelShader*  gLightModelPixelShader  = nullptr;
 ID3D11PixelShader*  gDepthOnlyPixelShader  = nullptr;
-
+ID3D11PixelShader*  gSpherePixelShader = nullptr;
+ID3D11PixelShader*  gCubePixelShader = nullptr;
 
 
 //--------------------------------------------------------------------------------------
@@ -38,9 +41,14 @@ bool LoadShaders()
     gBasicTransformVertexShader = LoadVertexShader("BasicTransform_vs");
     gLightModelPixelShader      = LoadPixelShader ("LightModel_ps");
     gDepthOnlyPixelShader       = LoadPixelShader ("DepthOnly_ps");
+    gSpherePixelShader          = LoadPixelShader("Sphere_ps");
+    gSphereVertexShader         = LoadVertexShader("Sphere_vs");
+    gCubePixelShader            = LoadPixelShader("Cube_ps");
 
     if (gPixelLightingVertexShader  == nullptr || gPixelLightingPixelShader == nullptr ||
-        gBasicTransformVertexShader == nullptr || gLightModelPixelShader    == nullptr || gDepthOnlyPixelShader == nullptr)
+        gBasicTransformVertexShader == nullptr || gLightModelPixelShader    == nullptr || 
+        gDepthOnlyPixelShader       == nullptr || gSphereVertexShader       == nullptr || 
+        gSpherePixelShader          == nullptr || gCubePixelShader          == nullptr)
     {
         gLastError = "Error loading shaders";
         return false;
@@ -57,6 +65,9 @@ void ReleaseShaders()
     if (gBasicTransformVertexShader)  gBasicTransformVertexShader->Release();
     if (gPixelLightingPixelShader)    gPixelLightingPixelShader->Release();
     if (gPixelLightingVertexShader)   gPixelLightingVertexShader->Release();
+    if (gSpherePixelShader)           gSpherePixelShader->Release();
+    if (gSphereVertexShader)          gSphereVertexShader->Release();
+    if (gCubePixelShader)             gCubePixelShader->Release();
 }
 
 
