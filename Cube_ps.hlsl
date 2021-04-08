@@ -125,8 +125,18 @@ float3 specularLight = specularLight1 + specularLight2 + specularLight3;
 float4 textureColour1 = DiffuseSpecularMap.Sample(TexSampler, input.uv);
 float4 textureColour2 = DiffuseSpecularMap2.Sample(TexSampler, input.uv);
 
-float3 diffuseMaterialColour = lerp(textureColour1.rgb, textureColour2.rgb, sin(wiggle * 0.1)); // Diffuse material colour in texture RGB (base colour of model)
-float specularMaterialColour = lerp(textureColour1.a, textureColour2.a, sin(wiggle * 0.1));   // Specular material colour in texture A (shininess of the surface)
+
+float sinWiggle = sin(wiggle * 0.1);
+float maxWiggle = max(sinWiggle, 0);
+
+//If sinWiggle is negative, make it positive.
+if (maxWiggle == 0)
+{
+	sinWiggle = 0 - sinWiggle;
+}
+//Cycle between two textures using wiggle variable.
+float3 diffuseMaterialColour = lerp(textureColour1.rgb, textureColour2.rgb, sinWiggle); // Diffuse material colour in texture RGB (base colour of model)
+float specularMaterialColour = lerp(textureColour1.a, textureColour2.a, sinWiggle);   // Specular material colour in texture A (shininess of the surface)
 
 // Combine lighting with texture colours
 float3 finalColour = diffuseLight * diffuseMaterialColour + specularLight * specularMaterialColour;

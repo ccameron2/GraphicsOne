@@ -689,7 +689,7 @@ void UpdateScene(float frameTime)
     if (KeyHit(Key_1))  go = !go;
 
     //Create create wiggle variable
-    gPerFrameConstants.wiggle += 8 * frameTime;
+    gPerFrameConstants.wiggle += 6 * frameTime;
 
     //Pulse light 1 on and off
     static bool lightOn = true;
