@@ -1,2 +1,13 @@
-﻿  compilation object save succeeded; see C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Cube_ps.cso
+﻿  Scene.cpp
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(690,54): warning C4305: '+=': truncation from 'double' to 'float'
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(698,55): warning C4305: '+=': truncation from 'double' to 'float'
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(707,25): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(708,25): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(709,25): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(716,15): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(719,19): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(728,15): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(731,19): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(740,15): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(743,19): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
   ShadowMapping.vcxproj -> C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\ShadowMapping.exe

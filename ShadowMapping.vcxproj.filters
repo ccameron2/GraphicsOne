@@ -27,6 +27,8 @@
     <ClCompile Include="Utility\GraphicsHelpers.cpp">
       <Filter>Utility</Filter>
     </ClCompile>
+    <ClCompile Include="Light.cpp" />
+    <ClCompile Include="Texture.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h" />
@@ -61,6 +63,8 @@
     <ClInclude Include="Utility\GraphicsHelpers.h">
       <Filter>Utility</Filter>
     </ClInclude>
+    <ClInclude Include="Light.h" />
+    <ClInclude Include="Texture.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Utility">

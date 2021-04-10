@@ -11,6 +11,8 @@
 #include "Shader.h"
 #include "Input.h"
 #include "Common.h"
+#include "Light.h"
+#include "Texture.h"
 
 #include "CVector2.h" 
 #include "CVector3.h" 
@@ -54,15 +56,11 @@ Model* gCube;
 Camera* gCamera;
 
 
-// Store lights in an array in this exercise
+// Store lights in an array
 const int NUM_LIGHTS = 3;
-struct Light
-{
-    Model*   model;
-    CVector3 colour;
-    float    strength;
-};
-Light gLights[NUM_LIGHTS]; 
+Light* gLights[NUM_LIGHTS]{};
+
+const int NUM_TEXTURES = 8;
 
 
 // Additional light information
@@ -126,31 +124,19 @@ ID3D11Buffer*     gPerModelConstantBuffer; // --"--
 //--------------------------------------------------------------------------------------
 
 // DirectX objects controlling textures used in this lab
-ID3D11Resource*           gCharacterDiffuseSpecularMap    = nullptr; // This object represents the memory used by the texture on the GPU
-ID3D11ShaderResourceView* gCharacterDiffuseSpecularMapSRV = nullptr; // This object is used to give shaders access to the texture above (SRV = shader resource view)
+//ID3D11Resource*           gCharacterDiffuseSpecularMap    = nullptr; // This object represents the memory used by the texture on the GPU
+//ID3D11ShaderResourceView* gCharacterDiffuseSpecularMapSRV = nullptr; // This object is used to give shaders access to the texture above (SRV = shader resource view)
+Texture* gTrollTexture = new Texture("TrollDiffuseSpecular.dds");
+Texture* gCargoTexture = new Texture("CargoA.dds");
+Texture* gGrassTexture = new Texture("GrassDiffuseSpecular.dds");
+Texture* gFlareTexture = new Texture("Flare.jpg");
+Texture* gWoodTexture = new Texture("WoodDiffuseSpecular.dds");
+Texture* gTechTexture = new Texture("TechDiffuseSpecular.dds");
+Texture* gCobbleTexture = new Texture("CobbleDiffuseSpecular.dds");
+Texture* gBrainTexture = new Texture("BrainDiffuseSpecular.dds");
 
-ID3D11Resource*           gCrateDiffuseSpecularMap    = nullptr;
-ID3D11ShaderResourceView* gCrateDiffuseSpecularMapSRV = nullptr;
-
-ID3D11Resource*           gGroundDiffuseSpecularMap    = nullptr;
-ID3D11ShaderResourceView* gGroundDiffuseSpecularMapSRV = nullptr;
-
-ID3D11Resource*           gSphereDiffuseSpecularMap = nullptr;
-ID3D11ShaderResourceView* gSphereDiffuseSpecularMapSRV = nullptr;
-
-ID3D11Resource*           gTeapotDiffuseSpecularMap = nullptr;
-ID3D11ShaderResourceView* gTeapotDiffuseSpecularMapSRV = nullptr;
-
-ID3D11Resource*           gCubeDiffuseSpecularMap = nullptr;
-ID3D11ShaderResourceView* gCubeDiffuseSpecularMapSRV = nullptr;
-
-ID3D11Resource*           gCube2DiffuseSpecularMap = nullptr;
-ID3D11ShaderResourceView* gCube2DiffuseSpecularMapSRV = nullptr;
-
-ID3D11Resource*           gLightDiffuseMap    = nullptr;
-ID3D11ShaderResourceView* gLightDiffuseMapSRV = nullptr;
-
-
+Texture* gTextures[NUM_TEXTURES] = { gTrollTexture, gCargoTexture, gGrassTexture, gFlareTexture, 
+                                        gWoodTexture, gTechTexture, gCobbleTexture, gBrainTexture };
 
 //--------------------------------------------------------------------------------------
 // Light Helper Functions
@@ -159,7 +145,7 @@ ID3D11ShaderResourceView* gLightDiffuseMapSRV = nullptr;
 // Get "camera-like" view matrix for a spotlight
 CMatrix4x4 CalculateLightViewMatrix(int lightIndex)
 {
-    return InverseAffine(gLights[lightIndex].model->WorldMatrix());
+    return InverseAffine(gLights[lightIndex]->GetModel()->WorldMatrix());
 }
 
 // Get "camera-like" projection matrix for a spotlight
@@ -194,8 +180,7 @@ bool InitGeometry()
         gLastError = e.what(); // This picks up the error message put in the exception (see Mesh.cpp)
         return false;
     }
-
-
+    CreateLights();
     // Load the shaders required for the geometry we will use (see Shader.cpp / .h)
     if (!LoadShaders())
     {
@@ -222,20 +207,16 @@ bool InitGeometry()
     // The LoadTexture function requires you to pass a ID3D11Resource* (e.g. &gCubeDiffuseMap), which manages the GPU memory for the
     // texture and also a ID3D11ShaderResourceView* (e.g. &gCubeDiffuseMapSRV), which allows us to use the texture in shaders
     // The function will fill in these pointers with usable data. The variables used here are globals found near the top of the file.
-    if (!LoadTexture("TrollDiffuseSpecular.dds", &gCharacterDiffuseSpecularMap, &gCharacterDiffuseSpecularMapSRV) ||
-        !LoadTexture("CargoA.dds",               &gCrateDiffuseSpecularMap,     &gCrateDiffuseSpecularMapSRV    ) ||
-        !LoadTexture("GrassDiffuseSpecular.dds", &gGroundDiffuseSpecularMap,    &gGroundDiffuseSpecularMapSRV   ) ||
-        !LoadTexture("Flare.jpg",                &gLightDiffuseMap,             &gLightDiffuseMapSRV            ) ||
-        !LoadTexture("WoodDiffuseSpecular.dds",  &gSphereDiffuseSpecularMap,    &gSphereDiffuseSpecularMapSRV   ) ||
-        !LoadTexture("TechDiffuseSpecular.dds",  &gTeapotDiffuseSpecularMap,    &gTeapotDiffuseSpecularMapSRV   ) ||
-        !LoadTexture("WoodDiffuseSpecular.dds",  &gCubeDiffuseSpecularMap,      &gCubeDiffuseSpecularMapSRV     ) ||
-        !LoadTexture("CobbleDiffuseSpecular.dds",&gCube2DiffuseSpecularMap,     &gCube2DiffuseSpecularMapSRV))
+
+    for (int i = 0; i < NUM_TEXTURES; i++)
     {
-        gLastError = "Error loading textures";
-        return false;
+        ID3D11Resource* DiffuseSpecularMap = nullptr;
+        ID3D11ShaderResourceView* DiffuseSpecularMapSRV = nullptr;
+        std::string TextureName = gTextures[i]->GetTextureName();
+        LoadTexture(TextureName, &DiffuseSpecularMap, &DiffuseSpecularMapSRV);
+        gTextures[i]->SetDiffuseSpecularMap(DiffuseSpecularMap);
+        gTextures[i]->SetDiffuseSpecularMapSRV(DiffuseSpecularMapSRV);
     }
-
-
 
 	//**** Create Shadow Map texture ****//
 
@@ -340,25 +321,26 @@ bool InitScene()
     // Light set-up - using an array this time
     for (int i = 0; i < NUM_LIGHTS; ++i)
     {
-        gLights[i].model = new Model(gLightMesh);
+        Model* lightModel = new Model(gLightMesh);
+        gLights[i]->SetModel(lightModel);
     }
 
-    gLights[0].colour = { 0.8f, 0.8f, 1.0f };
-    gLights[0].strength = 10;
-    gLights[0].model->SetPosition({ 30, 20, 0 });
-    gLights[0].model->SetScale(pow(gLights[0].strength, 0.7f)); // Convert light strength into a nice value for the scale of the light - equation is ad-hoc.
-	gLights[0].model->FaceTarget(gCharacter->Position());
-
-    gLights[1].colour = { 1.0f, 0.8f, 0.2f };
-    gLights[1].strength = 40;
-    gLights[1].model->SetPosition({ -15, 40, 120 });
-    gLights[1].model->SetScale(pow(gLights[1].strength, 0.7f));
-	gLights[1].model->FaceTarget({ gTeapot->Position() });
-
-    gLights[2].colour = { 1.0f, 0.8f, 0.2f };
-    gLights[2].strength = 15;
-    gLights[2].model->SetPosition({ 50, 70, -90 });
-    gLights[2].model->SetScale(pow(gLights[2].strength, 0.7f));
+    gLights[0]->SetColour(CVector3{ 0.8f, 0.8f, 1.0f });
+    gLights[0]->SetStrength(10);
+    gLights[0]->GetModel()->SetPosition({ 30, 20, 0 });
+    gLights[0]->GetModel()->SetScale(pow(gLights[0]->GetStrength(), 0.7f)); // Convert light strength into a nice value for the scale of the light - equation is ad-hoc.
+	gLights[0]->GetModel()->FaceTarget(gCharacter->Position());
+                
+    gLights[1]->SetColour(CVector3{ 1.0f, 0.8f, 0.2f });
+    gLights[1]->SetStrength(40);
+    gLights[1]->GetModel()->SetPosition({ -15, 40, 120 });
+    gLights[1]->GetModel()->SetScale(pow(gLights[1]->GetStrength(), 0.7f));
+	gLights[1]->GetModel()->FaceTarget({ gTeapot->Position() });
+                
+    gLights[2]->SetColour(CVector3{ 1.0f, 0.8f, 0.2f });
+    gLights[2]->SetStrength(15);
+    gLights[2]->GetModel()->SetPosition({ 50, 70, -90 });
+    gLights[2]->GetModel()->SetScale(pow(gLights[2]->GetStrength(), 0.7f));
     //// Set up camera ////
 
     gCamera = new Camera();
@@ -381,20 +363,20 @@ void ReleaseResources()
     if (gShadowMap2SRV)           gShadowMap2SRV->Release();
     if (gShadowMap2Texture)       gShadowMap2Texture->Release();
 
-    if (gLightDiffuseMapSRV)             gLightDiffuseMapSRV->Release();
-    if (gLightDiffuseMap)                gLightDiffuseMap->Release();
-    if (gGroundDiffuseSpecularMapSRV)    gGroundDiffuseSpecularMapSRV->Release();
-    if (gGroundDiffuseSpecularMap)       gGroundDiffuseSpecularMap->Release();
-    if (gCrateDiffuseSpecularMapSRV)     gCrateDiffuseSpecularMapSRV->Release();
-    if (gCrateDiffuseSpecularMap)        gCrateDiffuseSpecularMap->Release();
-    if (gCharacterDiffuseSpecularMapSRV) gCharacterDiffuseSpecularMapSRV->Release();
-    if (gCharacterDiffuseSpecularMap)    gCharacterDiffuseSpecularMap->Release();
-    if (gSphereDiffuseSpecularMapSRV)    gSphereDiffuseSpecularMapSRV->Release();
-    if (gSphereDiffuseSpecularMap)       gSphereDiffuseSpecularMap->Release();
-    if (gTeapotDiffuseSpecularMapSRV)    gTeapotDiffuseSpecularMapSRV->Release();
-    if (gTeapotDiffuseSpecularMap)       gTeapotDiffuseSpecularMap->Release();
-    if (gCubeDiffuseSpecularMapSRV)      gCubeDiffuseSpecularMapSRV->Release();
-    if (gCube2DiffuseSpecularMap)         gCube2DiffuseSpecularMap->Release();
+    if (gFlareTexture->GetDiffuseSpecularMapSRV()) gFlareTexture->GetDiffuseSpecularMapSRV()->Release();
+    if (gFlareTexture->GetDiffuseSpecularMap())    gFlareTexture->GetDiffuseSpecularMap()->Release();
+    if (gGrassTexture->GetDiffuseSpecularMapSRV()) gGrassTexture->GetDiffuseSpecularMapSRV()->Release();
+    if (gGrassTexture->GetDiffuseSpecularMap())    gGrassTexture->GetDiffuseSpecularMap()->Release();
+    if (gCargoTexture->GetDiffuseSpecularMapSRV()) gCargoTexture->GetDiffuseSpecularMapSRV()->Release();
+    if (gCargoTexture->GetDiffuseSpecularMap())    gCargoTexture->GetDiffuseSpecularMap()->Release();
+    if (gTrollTexture->GetDiffuseSpecularMapSRV()) gTrollTexture->GetDiffuseSpecularMapSRV()->Release();
+    if (gTrollTexture->GetDiffuseSpecularMap())    gTrollTexture->GetDiffuseSpecularMap()->Release();
+    if (gWoodTexture->GetDiffuseSpecularMapSRV())   gWoodTexture->GetDiffuseSpecularMapSRV()->Release();
+    if (gWoodTexture->GetDiffuseSpecularMap())      gWoodTexture->GetDiffuseSpecularMap()->Release();
+    if (gTechTexture->GetDiffuseSpecularMapSRV())   gTechTexture->GetDiffuseSpecularMapSRV()->Release();
+    if (gTechTexture->GetDiffuseSpecularMap())      gTechTexture->GetDiffuseSpecularMap()->Release();
+    if (gCobbleTexture->GetDiffuseSpecularMapSRV()) gCobbleTexture->GetDiffuseSpecularMapSRV()->Release();
+    if (gCobbleTexture->GetDiffuseSpecularMap())    gCobbleTexture->GetDiffuseSpecularMap()->Release();
 
     if (gPerModelConstantBuffer)  gPerModelConstantBuffer->Release();
     if (gPerFrameConstantBuffer)  gPerFrameConstantBuffer->Release();
@@ -404,7 +386,7 @@ void ReleaseResources()
     // See note in InitGeometry about why we're not using unique_ptr and having to manually delete
     for (int i = 0; i < NUM_LIGHTS; ++i)
     {
-        delete gLights[i].model;  gLights[i].model = nullptr;
+        delete gLights[i]->GetModel();  gLights[i]->SetModel(nullptr);
     }
     delete gCamera;    gCamera    = nullptr;
     delete gGround;    gGround    = nullptr;
@@ -493,7 +475,8 @@ void RenderSceneFromCamera(Camera* camera)
     gD3DContext->RSSetState(gCullBackState);
 
     // Select the approriate textures and sampler to use in the pixel shader
-    gD3DContext->PSSetShaderResources(0, 1, &gGroundDiffuseSpecularMapSRV); // First parameter must match texture slot number in the shader
+    ID3D11ShaderResourceView* grassDiffuseSpecularMapSRV = gGrassTexture->GetDiffuseSpecularMapSRV();
+    gD3DContext->PSSetShaderResources(0, 1, &grassDiffuseSpecularMapSRV); // First parameter must match texture slot number in the shader
     gD3DContext->PSSetSamplers(0, 1, &gAnisotropic4xSampler);
 
     // Render model - it will update the model's world matrix and send it to the GPU in a constant buffer, then it will call
@@ -501,14 +484,17 @@ void RenderSceneFromCamera(Camera* camera)
     gGround->Render();
 
     // Render other lit models, only change textures for each onee
-    gD3DContext->PSSetShaderResources(0, 1, &gCharacterDiffuseSpecularMapSRV); 
+    ID3D11ShaderResourceView* characterDiffuseSpecularMapSRV = gTrollTexture->GetDiffuseSpecularMapSRV();
+    gD3DContext->PSSetShaderResources(0, 1, &characterDiffuseSpecularMapSRV);
     gCharacter->Render();
 
-    gD3DContext->PSSetShaderResources(0, 1, &gCrateDiffuseSpecularMapSRV);
+    ID3D11ShaderResourceView* crateDiffuseSpecularMapSRV = gCargoTexture->GetDiffuseSpecularMapSRV();
+    gD3DContext->PSSetShaderResources(0, 1, &crateDiffuseSpecularMapSRV);
     gCrate->Render();
 
     //Render Teapot
-    gD3DContext->PSSetShaderResources(0, 1, &gTeapotDiffuseSpecularMapSRV);
+    ID3D11ShaderResourceView* teapotDiffuseSpecularMapSRV = gTechTexture->GetDiffuseSpecularMapSRV();
+    gD3DContext->PSSetShaderResources(0, 1, &teapotDiffuseSpecularMapSRV);
     gTeapot->Render();
 
     //Set Sphere Shaders
@@ -516,7 +502,8 @@ void RenderSceneFromCamera(Camera* camera)
     gD3DContext->PSSetShader(gSpherePixelShader, nullptr, 0);
 
     //Render Sphere
-    gD3DContext->PSSetShaderResources(0, 1, &gSphereDiffuseSpecularMapSRV);
+    ID3D11ShaderResourceView* sphereDiffuseSpecularMapSRV = gBrainTexture->GetDiffuseSpecularMapSRV();
+    gD3DContext->PSSetShaderResources(0, 1, &sphereDiffuseSpecularMapSRV);
     gSphere->Render();
     
     //Set Cube Shaders
@@ -524,8 +511,10 @@ void RenderSceneFromCamera(Camera* camera)
     gD3DContext->PSSetShader(gCubePixelShader, nullptr, 0);
 
     //Render Cube
-    gD3DContext->PSSetShaderResources(0, 1, &gCubeDiffuseSpecularMapSRV);
-    gD3DContext->PSSetShaderResources(3, 1, &gCube2DiffuseSpecularMapSRV);
+    ID3D11ShaderResourceView* cubeDiffuseSpecularMapSRV = gWoodTexture->GetDiffuseSpecularMapSRV();
+    ID3D11ShaderResourceView* cube2DiffuseSpecularMapSRV = gCobbleTexture->GetDiffuseSpecularMapSRV();
+    gD3DContext->PSSetShaderResources(0, 1, &cubeDiffuseSpecularMapSRV);
+    gD3DContext->PSSetShaderResources(3, 1, &cube2DiffuseSpecularMapSRV);
 
     gCube->Render();
 
@@ -536,7 +525,8 @@ void RenderSceneFromCamera(Camera* camera)
     gD3DContext->PSSetShader(gLightModelPixelShader,      nullptr, 0);
 
     // Select the texture and sampler to use in the pixel shader
-    gD3DContext->PSSetShaderResources(0, 1, &gLightDiffuseMapSRV); // First parameter must match texture slot number in the shaer
+    ID3D11ShaderResourceView* lightDiffuseSpecularMapSRV = gFlareTexture->GetDiffuseSpecularMapSRV();
+    gD3DContext->PSSetShaderResources(0, 1, &lightDiffuseSpecularMapSRV); // First parameter must match texture slot number in the shaer
     gD3DContext->PSSetSamplers(0, 1, &gAnisotropic4xSampler);
 
     // States - additive blending, read-only depth buffer and no culling (standard set-up for blending
@@ -547,8 +537,8 @@ void RenderSceneFromCamera(Camera* camera)
     // Render all the lights in the array
     for (int i = 0; i < NUM_LIGHTS; ++i)
     {
-        gPerModelConstants.objectColour = gLights[i].colour; // Set any per-model constants apart from the world matrix just before calling render (light colour here)
-        gLights[i].model->Render();
+        gPerModelConstants.objectColour = gLights[i]->GetColour(); // Set any per-model constants apart from the world matrix just before calling render (light colour here)
+        gLights[i]->GetModel()->Render();
     }
 }
 
@@ -563,22 +553,22 @@ void RenderScene()
 
     // Set up the light information in the constant buffer
     // Don't send to the GPU yet, the function RenderSceneFromCamera will do that
-    gPerFrameConstants.light1Colour   = gLights[0].colour * gLights[0].strength;
-    gPerFrameConstants.light1Position = gLights[0].model->Position();
-    gPerFrameConstants.light1Facing   = Normalise(gLights[0].model->WorldMatrix().GetZAxis());    // Additional lighting information for spotlights
-    gPerFrameConstants.light1CosHalfAngle = cos(ToRadians(gSpotlightConeAngle / 2)); // --"--
+    gPerFrameConstants.light1Colour   =         gLights[0]->GetColour() * gLights[0]->GetStrength();
+    gPerFrameConstants.light1Position =         gLights[0]->GetModel()->Position();
+    gPerFrameConstants.light1Facing   =         Normalise(gLights[0]->GetModel()->WorldMatrix().GetZAxis());    // Additional lighting information for spotlights
+    gPerFrameConstants.light1CosHalfAngle =     cos(ToRadians(gSpotlightConeAngle / 2)); // --"--
     gPerFrameConstants.light1ViewMatrix       = CalculateLightViewMatrix(0);         // Calculate camera-like matrices for...
     gPerFrameConstants.light1ProjectionMatrix = CalculateLightProjectionMatrix(0);   //...lights to support shadow mapping
 
-    gPerFrameConstants.light2Colour = gLights[1].colour * gLights[1].strength;
-    gPerFrameConstants.light2Position = gLights[1].model->Position();
-    gPerFrameConstants.light2Facing = Normalise(gLights[1].model->WorldMatrix().GetZAxis());    // Additional lighting information for spotlights
-    gPerFrameConstants.light2CosHalfAngle = cos(ToRadians(gSpotlightConeAngle / 2)); // --"--
-    gPerFrameConstants.light2ViewMatrix = CalculateLightViewMatrix(1);         // Calculate camera-like matrices for...
-    gPerFrameConstants.light2ProjectionMatrix = CalculateLightProjectionMatrix(1);   //...lights to support shadow mapping
+    gPerFrameConstants.light2Colour =           gLights[1]->GetColour() * gLights[1]->GetStrength();
+    gPerFrameConstants.light2Position =         gLights[1]->GetModel()->Position();
+    gPerFrameConstants.light2Facing =           Normalise(gLights[1]->GetModel()->WorldMatrix().GetZAxis());    // Additional lighting information for spotlights
+    gPerFrameConstants.light2CosHalfAngle =     cos(ToRadians(gSpotlightConeAngle / 2)); // --"--
+    gPerFrameConstants.light2ViewMatrix =       CalculateLightViewMatrix(1);         // Calculate cara-like matrices for...
+    gPerFrameConstants.light2ProjectionMatrix = CalculateLightProjectionMatrix(1);   //...lights to pport shadow mapping
 
-    gPerFrameConstants.light3Colour = gLights[2].colour * gLights[2].strength;
-    gPerFrameConstants.light3Position = gLights[2].model->Position();
+    gPerFrameConstants.light3Colour =           gLights[2]->GetColour() * gLights[2]->GetStrength();
+    gPerFrameConstants.light3Position =         gLights[2]->GetModel()->Position();
 
     gPerFrameConstants.ambientColour  = gAmbientColour;
     gPerFrameConstants.specularPower  = gSpecularPower;
@@ -683,8 +673,8 @@ void UpdateScene(float frameTime)
     // Orbit the light - a bit of a cheat with the static variable [ask the tutor if you want to know what this is]
 	static float rotate = 0.0f;
     static bool go = true;
-	gLights[0].model->SetPosition( gCharacter->Position() + CVector3{ cos(rotate) * gLightOrbit, 10, sin(rotate) * gLightOrbit } );
-	gLights[0].model->FaceTarget(gCharacter->Position());
+	gLights[0]->GetModel()->SetPosition( gCharacter->Position() + CVector3{ cos(rotate) * gLightOrbit, 10, sin(rotate) * gLightOrbit } );
+	gLights[0]->GetModel()->FaceTarget(gCharacter->Position());
     if (go)  rotate -= gLightOrbitSpeed * frameTime;
     if (KeyHit(Key_1))  go = !go;
 
@@ -694,23 +684,24 @@ void UpdateScene(float frameTime)
     //Pulse light 1 on and off
     static bool lightOn = true;
 
+    float lightStrength = gLights[0]->GetStrength();
     if (lightOn)
-    {
-        gLights[0].strength += 0.05;
-        if (gLights[0].strength >= 20)
-        {
+    {       
+        gLights[0]->SetStrength(lightStrength += 0.05) ;
+        if (gLights[0]->GetStrength() >= 20)
+        {                          
             lightOn = false;
         }
     }
     else
     {
-        gLights[0].strength += -0.05;
-        if (gLights[0].strength <= 0.05)
+        gLights[0]->SetStrength(lightStrength += -0.05);
+        if (gLights[0]->GetStrength() <= 0.05)
         {
             lightOn = true;
         }
     }
-    gLights[0].model->SetScale(pow(gLights[0].strength, 0.7f));
+    gLights[0]->GetModel()->SetScale(pow(lightStrength, 0.7f));
 
     //Change light 2 colour
     static float r = 0.2;
@@ -763,7 +754,7 @@ void UpdateScene(float frameTime)
         blueCycle = false;
     }
 
-    gLights[1].colour = { r, g, b };
+    gLights[1]->SetColour(CVector3{ r, g, b });
 
 
 
@@ -793,5 +784,14 @@ void UpdateScene(float frameTime)
         SetWindowTextA(gHWnd, windowTitle.c_str());
         totalFrameTime = 0;
         frameCount = 0;
+    }
+}
+
+void CreateLights()
+{
+    for (int i = 0; i < NUM_LIGHTS; i++)
+    {
+        Light* light = new Light();
+        gLights[i] = light;
     }
 }
