@@ -22,6 +22,7 @@ SamplerState PointClamp   : register(s1); // No filtering for shadow maps (you m
 
 Texture2D ShadowMapLight2 : register(t2);
 
+Texture2D NormalMap : register(t3);
 //--------------------------------------------------------------------------------------
 // Shader code
 //--------------------------------------------------------------------------------------
@@ -30,6 +31,8 @@ Texture2D ShadowMapLight2 : register(t2);
 // This shader just samples a diffuse texture map
 float4 main(LightingPixelShaderInput input) : SV_Target
 {
+
+
 	// Slight adjustment to calculated depth of pixels so they don't shadow themselves
 	const float DepthAdjust = 0.002f;
 

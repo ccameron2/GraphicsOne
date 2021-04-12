@@ -91,7 +91,7 @@ struct PerFrameConstants
     float      specularPower;
 
     CVector3   cameraPosition;
-    float      padding5;
+    float      gParallaxDepth;
 
     float      wiggle = 0;
 };

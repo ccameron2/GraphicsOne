@@ -52,6 +52,7 @@ Model* gGround;
 Model* gSphere;
 Model* gTeapot;
 Model* gCube;
+Model* gSphere2;
 
 Camera* gCamera;
 
@@ -59,8 +60,6 @@ Camera* gCamera;
 // Store lights in an array
 const int NUM_LIGHTS = 3;
 Light* gLights[NUM_LIGHTS]{};
-
-const int NUM_TEXTURES = 8;
 
 
 // Additional light information
@@ -122,7 +121,7 @@ ID3D11Buffer*     gPerModelConstantBuffer; // --"--
 //--------------------------------------------------------------------------------------
 // Textures
 //--------------------------------------------------------------------------------------
-
+const int NUM_TEXTURES = 12;
 // DirectX objects controlling textures used in this lab
 //ID3D11Resource*           gCharacterDiffuseSpecularMap    = nullptr; // This object represents the memory used by the texture on the GPU
 //ID3D11ShaderResourceView* gCharacterDiffuseSpecularMapSRV = nullptr; // This object is used to give shaders access to the texture above (SRV = shader resource view)
@@ -133,10 +132,16 @@ Texture* gFlareTexture = new Texture("Flare.jpg");
 Texture* gWoodTexture = new Texture("WoodDiffuseSpecular.dds");
 Texture* gTechTexture = new Texture("TechDiffuseSpecular.dds");
 Texture* gCobbleTexture = new Texture("CobbleDiffuseSpecular.dds");
+Texture* gCobbleNormal = new Texture("CobbleNormalHeight.dds");
 Texture* gBrainTexture = new Texture("BrainDiffuseSpecular.dds");
+Texture* gBrainNormal = new Texture("BrainNormalHeight.dds");
+Texture* gPatternNormal = new Texture("PatternNormalHeight.dds");
+Texture* gPatternTexture = new Texture("PatternDiffuseSpecular.dds");
+Texture* gFoxTexture = new Texture("fox.png");
 
 Texture* gTextures[NUM_TEXTURES] = { gTrollTexture, gCargoTexture, gGrassTexture, gFlareTexture, 
-                                        gWoodTexture, gTechTexture, gCobbleTexture, gBrainTexture };
+                                        gWoodTexture, gTechTexture, gCobbleTexture, gBrainTexture,
+                                            gBrainNormal, gPatternNormal, gPatternTexture, gFoxTexture };
 
 //--------------------------------------------------------------------------------------
 // Light Helper Functions
@@ -167,7 +172,7 @@ bool InitGeometry()
     // IMPORTANT NOTE: Will only keep the first object from the mesh - multipart objects will have parts missing - see later lab for more robust loader
     try 
     {
-        gCharacterMesh = new Mesh("Troll.x");
+        gCharacterMesh = new Mesh("Fox.fbx");
         gCrateMesh     = new Mesh("CargoContainer.x");
         gGroundMesh    = new Mesh("Hills.x");
         gSphereMesh    = new Mesh("Sphere.x");
@@ -305,17 +310,19 @@ bool InitScene()
     gSphere    = new Model(gSphereMesh);
     gTeapot    = new Model(gTeapotMesh);
     gCube      = new Model(gCubeMesh);
+    gSphere2   = new Model(gSphereMesh);
 
 	// Initial positions
-	gCharacter->SetPosition({ -10, 5, 50 });
-    gCharacter->SetScale(6);
-    gCharacter->SetRotation({ 0, ToRadians(20), 0 });
-	gCrate->SetPosition({ 58, 4, 80 });
+	gCharacter->SetPosition({ 0, 0, 70 });
+    gCharacter->SetScale(0.2);
+    gCharacter->SetRotation({ 0, ToRadians(220), 0 });
+	gCrate->SetPosition({ 58, 4, 100 });
 	gCrate->SetScale(6);
 	gCrate->SetRotation({ 0.0f, ToRadians(-180.0f), 0.0f });
-    gSphere->SetPosition({ 70, 15, -60 });
-    gTeapot->SetPosition({ 20, 5, 50 });
-    gCube->SetPosition({ 40, 15, -60 });
+    gSphere->SetPosition({ 70, 20, 10 });
+    gSphere2->SetPosition({ 50, 20,-70 });
+    gTeapot->SetPosition({ 40, 5, 70 });
+    gCube->SetPosition({ 40, 15, 10 });
     gCube->SetScale(2);
 
     // Light set-up - using an array this time
@@ -377,6 +384,9 @@ void ReleaseResources()
     if (gTechTexture->GetDiffuseSpecularMap())      gTechTexture->GetDiffuseSpecularMap()->Release();
     if (gCobbleTexture->GetDiffuseSpecularMapSRV()) gCobbleTexture->GetDiffuseSpecularMapSRV()->Release();
     if (gCobbleTexture->GetDiffuseSpecularMap())    gCobbleTexture->GetDiffuseSpecularMap()->Release();
+    if (gBrainTexture->GetDiffuseSpecularMap())     gBrainTexture->GetDiffuseSpecularMap()->Release();
+    if (gBrainNormal->GetDiffuseSpecularMap())      gBrainNormal->GetDiffuseSpecularMap()->Release();
+
 
     if (gPerModelConstantBuffer)  gPerModelConstantBuffer->Release();
     if (gPerFrameConstantBuffer)  gPerFrameConstantBuffer->Release();
@@ -395,6 +405,7 @@ void ReleaseResources()
     delete gSphere;    gSphere    = nullptr;
     delete gTeapot;    gTeapot    = nullptr;
     delete gCube;      gCube      = nullptr;
+    delete gSphere2;   gSphere2   = nullptr;
 
     delete gLightMesh;     gLightMesh     = nullptr;
     delete gGroundMesh;    gGroundMesh    = nullptr;
@@ -484,7 +495,7 @@ void RenderSceneFromCamera(Camera* camera)
     gGround->Render();
 
     // Render other lit models, only change textures for each onee
-    ID3D11ShaderResourceView* characterDiffuseSpecularMapSRV = gTrollTexture->GetDiffuseSpecularMapSRV();
+    ID3D11ShaderResourceView* characterDiffuseSpecularMapSRV = gFoxTexture->GetDiffuseSpecularMapSRV();
     gD3DContext->PSSetShaderResources(0, 1, &characterDiffuseSpecularMapSRV);
     gCharacter->Render();
 
@@ -517,6 +528,25 @@ void RenderSceneFromCamera(Camera* camera)
     gD3DContext->PSSetShaderResources(3, 1, &cube2DiffuseSpecularMapSRV);
 
     gCube->Render();
+
+    //Set Sphere2 Shaders
+    gD3DContext->VSSetShader(gNormalMappingVertexShader, nullptr, 0);
+    gD3DContext->PSSetShader(gNormalMappingPixelShader, nullptr, 0);
+
+    //Render Sphere2
+    ID3D11ShaderResourceView* sphere2DiffuseSpecularMapSRV = gPatternTexture->GetDiffuseSpecularMapSRV();
+    gD3DContext->PSSetShaderResources(0, 1, &sphere2DiffuseSpecularMapSRV);
+
+    ID3D11ShaderResourceView* sphere2ndDiffuseSpecularMapSRV = gBrainTexture->GetDiffuseSpecularMapSRV();
+    gD3DContext->PSSetShaderResources(1, 1, &sphere2ndDiffuseSpecularMapSRV);
+
+    ID3D11ShaderResourceView* normalMapSRV = gPatternNormal->GetDiffuseSpecularMapSRV();
+    gD3DContext->PSSetShaderResources(2, 1, &normalMapSRV);
+
+    ID3D11ShaderResourceView* normalMap2SRV = gBrainNormal->GetDiffuseSpecularMapSRV();
+    gD3DContext->PSSetShaderResources(3, 1, &normalMap2SRV);
+
+    gSphere2->Render();
 
     //// Render lights ////
 

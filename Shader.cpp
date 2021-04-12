@@ -16,14 +16,16 @@
 
 // Vertex and pixel shader DirectX objects
 ID3D11VertexShader* gPixelLightingVertexShader = nullptr;
-ID3D11PixelShader*  gPixelLightingPixelShader  = nullptr;
 ID3D11VertexShader* gBasicTransformVertexShader = nullptr; // Used before light model and depth-only pixel shader
 ID3D11VertexShader* gSphereVertexShader = nullptr;
 
+ID3D11PixelShader*  gPixelLightingPixelShader = nullptr;
 ID3D11PixelShader*  gLightModelPixelShader  = nullptr;
 ID3D11PixelShader*  gDepthOnlyPixelShader  = nullptr;
 ID3D11PixelShader*  gSpherePixelShader = nullptr;
 ID3D11PixelShader*  gCubePixelShader = nullptr;
+ID3D11VertexShader* gNormalMappingVertexShader = nullptr;
+ID3D11PixelShader*  gNormalMappingPixelShader = nullptr;
 
 
 //--------------------------------------------------------------------------------------
@@ -44,11 +46,14 @@ bool LoadShaders()
     gSpherePixelShader          = LoadPixelShader("Sphere_ps");
     gSphereVertexShader         = LoadVertexShader("Sphere_vs");
     gCubePixelShader            = LoadPixelShader("Cube_ps");
+    gNormalMappingVertexShader  = LoadVertexShader("NormalMapping_vs");
+    gNormalMappingPixelShader   = LoadPixelShader("NormalMapping_ps");
 
     if (gPixelLightingVertexShader  == nullptr || gPixelLightingPixelShader == nullptr ||
         gBasicTransformVertexShader == nullptr || gLightModelPixelShader    == nullptr || 
         gDepthOnlyPixelShader       == nullptr || gSphereVertexShader       == nullptr || 
-        gSpherePixelShader          == nullptr || gCubePixelShader          == nullptr)
+        gSpherePixelShader          == nullptr || gCubePixelShader          == nullptr ||
+        gNormalMappingVertexShader  == nullptr || gNormalMappingPixelShader == nullptr)
     {
         gLastError = "Error loading shaders";
         return false;
@@ -68,6 +73,9 @@ void ReleaseShaders()
     if (gSpherePixelShader)           gSpherePixelShader->Release();
     if (gSphereVertexShader)          gSphereVertexShader->Release();
     if (gCubePixelShader)             gCubePixelShader->Release();
+    if (gNormalMappingVertexShader)   gNormalMappingVertexShader->Release();
+    if (gNormalMappingPixelShader)    gNormalMappingPixelShader->Release();
+
 }
 
 

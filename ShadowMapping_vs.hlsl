@@ -35,7 +35,7 @@ LightingPixelShaderInput main(BasicVertex modelVertex)
                                                              //... it is not needed for lighting so discard afterwards with the .xyz
     output.worldPosition = worldPosition.xyz; // Also pass world position to pixel shader for lighting
 
-    
+
 
     // Pass texture coordinates (UVs) on to the pixel shader, the vertex shader doesn't need them
     output.uv = modelVertex.uv;
