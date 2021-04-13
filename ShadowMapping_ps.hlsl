@@ -21,8 +21,6 @@ Texture2D ShadowMapLight1 : register(t1); // Texture holding the view of the sce
 SamplerState PointClamp   : register(s1); // No filtering for shadow maps (you might think you could use trilinear or similar, but it will filter light depths not the shadows cast...)
 
 Texture2D ShadowMapLight2 : register(t2);
-
-Texture2D NormalMap : register(t3);
 //--------------------------------------------------------------------------------------
 // Shader code
 //--------------------------------------------------------------------------------------
@@ -115,9 +113,17 @@ float4 main(LightingPixelShaderInput input) : SV_Target
 	float3 halfway = normalize(light3Direction + cameraDirection);
 	float3 specularLight3 = gLight3Colour * pow(max(dot(input.worldNormal, halfway), 0), gSpecularPower);
 
+	//Light 4
+	float3 light4Direction = normalize(gLight4Position - input.worldPosition.xyz);
+	float3 light4Dist = length(gLight4Position - input.worldPosition);
+	float3 diffuseLight4 = gLight4Colour * max(dot(input.worldNormal, light4Direction), 0) / light4Dist;
+
+	halfway = normalize(light4Direction + cameraDirection);
+	float3 specularLight4 = gLight4Colour * pow(max(dot(input.worldNormal, halfway), 0), gSpecularPower);
+
 	//Combine values for diffuse and specular light from all lights
-	float3 diffuseLight = gAmbientColour + diffuseLight1 + diffuseLight2 + diffuseLight3; //Add ambient colour here
-	float3 specularLight = specularLight1 + specularLight2 + specularLight3;
+	float3 diffuseLight = gAmbientColour + diffuseLight1 + diffuseLight2 + diffuseLight3 + diffuseLight4; //Add ambient colour here
+	float3 specularLight = specularLight1 + specularLight2 + specularLight3 + specularLight3 + specularLight4;
 
 	////////////////////
 	// Combine lighting and textures

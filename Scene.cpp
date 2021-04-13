@@ -45,6 +45,8 @@ Mesh* gSphereMesh;
 Mesh* gLightMesh;
 Mesh* gTeapotMesh;
 Mesh* gCubeMesh;
+Mesh* gTreeMesh;
+Mesh* gBatMesh;
 
 Model* gCharacter;
 Model* gCrate;
@@ -52,14 +54,21 @@ Model* gGround;
 Model* gSphere;
 Model* gTeapot;
 Model* gCube;
-Model* gSphere2;
+Model* gTree;
+Model* gBat;
+
+const int MAX_TREES = 10;
+Model* gTrees[MAX_TREES];
+
+const int MAX_BATS = 10;
+Model* gBats[MAX_BATS];
 
 Camera* gCamera;
 
 
 // Store lights in an array
-const int NUM_LIGHTS = 3;
-Light* gLights[NUM_LIGHTS]{};
+const int NUM_LIGHTS = 4;
+Light* gLights[NUM_LIGHTS];
 
 
 // Additional light information
@@ -69,13 +78,13 @@ float    gSpecularPower = 256; // Specular power controls shininess - same for a
 ColourRGBA gBackgroundColor = { 0.2f, 0.2f, 0.3f, 1.0f };
 
 // Variables controlling light1's orbiting of the cube
-const float gLightOrbit = 20.0f;
+const float gLightOrbit = 30.0f;
 const float gLightOrbitSpeed = 0.7f;
 
 // Spotlight data - using spotlights in this lab because shadow mapping needs to treat each light as a camera, which is easy with spotlights
 float gSpotlightConeAngle = 90.0f; // Spot light cone angle (degrees), like the FOV (field-of-view) of the spot light
 
-// Lock FPS to monitor refresh rate, which will typically set it to 60fps. Press 'p' to toggle to full fps
+// Lock FPS to monitor refresh rate, for me this is 165. Press 'p' to toggle to full fps
 bool lockFPS = true;
 
 
@@ -121,7 +130,7 @@ ID3D11Buffer*     gPerModelConstantBuffer; // --"--
 //--------------------------------------------------------------------------------------
 // Textures
 //--------------------------------------------------------------------------------------
-const int NUM_TEXTURES = 12;
+const int NUM_TEXTURES = 13;
 // DirectX objects controlling textures used in this lab
 //ID3D11Resource*           gCharacterDiffuseSpecularMap    = nullptr; // This object represents the memory used by the texture on the GPU
 //ID3D11ShaderResourceView* gCharacterDiffuseSpecularMapSRV = nullptr; // This object is used to give shaders access to the texture above (SRV = shader resource view)
@@ -130,7 +139,9 @@ Texture* gCargoTexture = new Texture("CargoA.dds");
 Texture* gGrassTexture = new Texture("GrassDiffuseSpecular.dds");
 Texture* gFlareTexture = new Texture("Flare.jpg");
 Texture* gWoodTexture = new Texture("WoodDiffuseSpecular.dds");
+Texture* gWoodNormal = new Texture("WoodDiffuseSpecular.dds");
 Texture* gTechTexture = new Texture("TechDiffuseSpecular.dds");
+Texture* gTechNormal = new Texture("TechNormalHeight.dds");
 Texture* gCobbleTexture = new Texture("CobbleDiffuseSpecular.dds");
 Texture* gCobbleNormal = new Texture("CobbleNormalHeight.dds");
 Texture* gBrainTexture = new Texture("BrainDiffuseSpecular.dds");
@@ -138,10 +149,17 @@ Texture* gBrainNormal = new Texture("BrainNormalHeight.dds");
 Texture* gPatternNormal = new Texture("PatternNormalHeight.dds");
 Texture* gPatternTexture = new Texture("PatternDiffuseSpecular.dds");
 Texture* gFoxTexture = new Texture("fox.png");
+Texture* gBatTexture = new Texture("Bat.png");
+Texture* gWallTexture = new Texture("WallDiffuseSpecular.dds");
+Texture* gWallNormal = new Texture("WallNormalHeight.dds");
 
-Texture* gTextures[NUM_TEXTURES] = { gTrollTexture, gCargoTexture, gGrassTexture, gFlareTexture, 
+float gParallaxDepth = 0.1f;
+bool gUseParallax = true;
+
+Texture* gTextures[NUM_TEXTURES] = { gTrollTexture, gCargoTexture, gGrassTexture, gFlareTexture,
                                         gWoodTexture, gTechTexture, gCobbleTexture, gBrainTexture,
-                                            gBrainNormal, gPatternNormal, gPatternTexture, gFoxTexture };
+                                            gBrainNormal, gPatternNormal, gPatternTexture, gFoxTexture,
+                                                gBatTexture };
 
 //--------------------------------------------------------------------------------------
 // Light Helper Functions
@@ -175,10 +193,12 @@ bool InitGeometry()
         gCharacterMesh = new Mesh("Fox.fbx");
         gCrateMesh     = new Mesh("CargoContainer.x");
         gGroundMesh    = new Mesh("Hills.x");
-        gSphereMesh    = new Mesh("Sphere.x");
+        gSphereMesh    = new Mesh("Sphere.x", true);
         gLightMesh     = new Mesh("Light.x");
-        gTeapotMesh    = new Mesh("Teapot.x");
-        gCubeMesh      = new Mesh("Cube.x");
+        gTeapotMesh    = new Mesh("Teapot.x",true);
+        gCubeMesh      = new Mesh("Cube.x", true);
+        gTreeMesh      = new Mesh("Tree.fbx");
+        gBatMesh       = new Mesh("bat.fbx");
     }
     catch (std::runtime_error e)  // Constructors cannot return error messages so use exceptions to catch mesh errors (fairly standard approach this)
     {
@@ -209,10 +229,6 @@ bool InitGeometry()
     //// Load / prepare textures on the GPU ////
 
     // Load textures and create DirectX objects for them
-    // The LoadTexture function requires you to pass a ID3D11Resource* (e.g. &gCubeDiffuseMap), which manages the GPU memory for the
-    // texture and also a ID3D11ShaderResourceView* (e.g. &gCubeDiffuseMapSRV), which allows us to use the texture in shaders
-    // The function will fill in these pointers with usable data. The variables used here are globals found near the top of the file.
-
     for (int i = 0; i < NUM_TEXTURES; i++)
     {
         ID3D11Resource* DiffuseSpecularMap = nullptr;
@@ -310,17 +326,31 @@ bool InitScene()
     gSphere    = new Model(gSphereMesh);
     gTeapot    = new Model(gTeapotMesh);
     gCube      = new Model(gCubeMesh);
-    gSphere2   = new Model(gSphereMesh);
+    gBat       = new Model(gBatMesh);
+
+    //Bats
+    for (int i = 0; i < MAX_BATS; i++)
+    {
+        gBats[i] = new Model(gBatMesh);
+        gBats[i]->SetPosition({ -130 + 20 * sin(i * 10.0f), 20 ,140 + 20 * cos(i * 10.0f) });
+        gBats[i]->SetScale(0.1);
+    }
+    //Trees
+    for (int i = 0; i < MAX_TREES; i++)
+    {
+        gTrees[i] = new Model(gTreeMesh);
+        gTrees[i]->SetPosition({ -170 , 0, 100 + i * 10.0f });
+        gTrees[i]->SetScale(0.06);
+    }
 
 	// Initial positions
-	gCharacter->SetPosition({ 0, 0, 70 });
+	gCharacter->SetPosition({ -120, 2, 150 });
     gCharacter->SetScale(0.2);
     gCharacter->SetRotation({ 0, ToRadians(220), 0 });
 	gCrate->SetPosition({ 58, 4, 100 });
 	gCrate->SetScale(6);
 	gCrate->SetRotation({ 0.0f, ToRadians(-180.0f), 0.0f });
     gSphere->SetPosition({ 70, 20, 10 });
-    gSphere2->SetPosition({ 50, 20,-70 });
     gTeapot->SetPosition({ 40, 5, 70 });
     gCube->SetPosition({ 40, 15, 10 });
     gCube->SetScale(2);
@@ -345,9 +375,15 @@ bool InitScene()
 	gLights[1]->GetModel()->FaceTarget({ gTeapot->Position() });
                 
     gLights[2]->SetColour(CVector3{ 1.0f, 0.8f, 0.2f });
-    gLights[2]->SetStrength(15);
-    gLights[2]->GetModel()->SetPosition({ 50, 70, -90 });
+    gLights[2]->SetStrength(20);
+    gLights[2]->GetModel()->SetPosition({ 50, 40, -110 });
     gLights[2]->GetModel()->SetScale(pow(gLights[2]->GetStrength(), 0.7f));
+
+    gLights[3]->SetColour(CVector3{ 1.0f, 0.8f, 0.2f });
+    gLights[3]->SetStrength(20);
+    gLights[3]->GetModel()->SetPosition({ -120, 60, 150 });
+    gLights[3]->GetModel()->SetScale(pow(gLights[3]->GetStrength(), 0.7f));
+
     //// Set up camera ////
 
     gCamera = new Camera();
@@ -405,7 +441,17 @@ void ReleaseResources()
     delete gSphere;    gSphere    = nullptr;
     delete gTeapot;    gTeapot    = nullptr;
     delete gCube;      gCube      = nullptr;
-    delete gSphere2;   gSphere2   = nullptr;
+    delete gTree;      gTree      = nullptr;
+    delete gBat;       gBat       = nullptr;
+
+    for (int i = 0; i < MAX_TREES; i++)
+    {
+        delete gTrees[i]; gTrees[i] = nullptr;
+    }
+    for (int i = 0; i < MAX_BATS; i++)
+    {
+        delete gBats[i]; gTrees[i] = nullptr;
+    }
 
     delete gLightMesh;     gLightMesh     = nullptr;
     delete gGroundMesh;    gGroundMesh    = nullptr;
@@ -413,7 +459,9 @@ void ReleaseResources()
     delete gCharacterMesh; gCharacterMesh = nullptr;
     delete gSphereMesh;    gSphereMesh    = nullptr;
     delete gTeapotMesh;    gTeapotMesh    = nullptr;
-    delete gCube;          gCubeMesh      = nullptr;
+    delete gCubeMesh;      gCubeMesh      = nullptr;
+    delete gTreeMesh;      gTreeMesh      = nullptr;
+    delete gBatMesh;       gBatMesh       = nullptr;
 }
 
 
@@ -454,6 +502,14 @@ void RenderDepthBufferFromLight(int lightIndex)
     gSphere->Render();
     gTeapot->Render();
     gCube->Render();
+    for (int i = 0; i < MAX_TREES; i++)
+    {
+        gTrees[i]->Render();
+    }
+    for (int i = 0; i < MAX_BATS; i++)
+    {
+        gBats[i]->Render();
+    }
 }
 
 
@@ -485,6 +541,7 @@ void RenderSceneFromCamera(Camera* camera)
     gD3DContext->OMSetDepthStencilState(gUseDepthBufferState, 0);
     gD3DContext->RSSetState(gCullBackState);
 
+
     // Select the approriate textures and sampler to use in the pixel shader
     ID3D11ShaderResourceView* grassDiffuseSpecularMapSRV = gGrassTexture->GetDiffuseSpecularMapSRV();
     gD3DContext->PSSetShaderResources(0, 1, &grassDiffuseSpecularMapSRV); // First parameter must match texture slot number in the shader
@@ -495,17 +552,47 @@ void RenderSceneFromCamera(Camera* camera)
     gGround->Render();
 
     // Render other lit models, only change textures for each onee
+        //Render trees
+    ID3D11ShaderResourceView* treeDiffuseSpecularMapSRV = gGrassTexture->GetDiffuseSpecularMapSRV();
+    gD3DContext->PSSetShaderResources(0, 1, &treeDiffuseSpecularMapSRV);
+
+    for (int i = 0; i < MAX_TREES; i++)
+    {
+        gTrees[i]->Render();
+    }
+    //Render bats;
+    ID3D11ShaderResourceView* batDiffuseSpecularMapSRV = gBatTexture->GetDiffuseSpecularMapSRV();
+    gD3DContext->PSSetShaderResources(0, 1, &batDiffuseSpecularMapSRV);
+
+    for (int i = 0; i < MAX_BATS; i++)
+    {
+        gBats[i]->Render();
+    }
+
     ID3D11ShaderResourceView* characterDiffuseSpecularMapSRV = gFoxTexture->GetDiffuseSpecularMapSRV();
     gD3DContext->PSSetShaderResources(0, 1, &characterDiffuseSpecularMapSRV);
     gCharacter->Render();
 
+    //Render Crate
     ID3D11ShaderResourceView* crateDiffuseSpecularMapSRV = gCargoTexture->GetDiffuseSpecularMapSRV();
     gD3DContext->PSSetShaderResources(0, 1, &crateDiffuseSpecularMapSRV);
     gCrate->Render();
 
+    ID3D11ShaderResourceView* crateNormalMapSRV = gPatternNormal->GetDiffuseSpecularMapSRV();
+    gD3DContext->PSSetShaderResources(3, 1, &crateNormalMapSRV);
+
+
+    //Set Normal Mapping Shaders
+    gD3DContext->VSSetShader(gNormalMappingVertexShader, nullptr, 0);
+    gD3DContext->PSSetShader(gNormalMappingPixelShader, nullptr, 0);
+    
     //Render Teapot
-    ID3D11ShaderResourceView* teapotDiffuseSpecularMapSRV = gTechTexture->GetDiffuseSpecularMapSRV();
+    ID3D11ShaderResourceView* teapotDiffuseSpecularMapSRV = gCobbleTexture->GetDiffuseSpecularMapSRV();
     gD3DContext->PSSetShaderResources(0, 1, &teapotDiffuseSpecularMapSRV);
+
+    ID3D11ShaderResourceView* teapotNormalMapSRV = gCobbleNormal->GetDiffuseSpecularMapSRV();
+    gD3DContext->PSSetShaderResources(3, 1, &teapotNormalMapSRV);
+
     gTeapot->Render();
 
     //Set Sphere Shaders
@@ -515,38 +602,28 @@ void RenderSceneFromCamera(Camera* camera)
     //Render Sphere
     ID3D11ShaderResourceView* sphereDiffuseSpecularMapSRV = gBrainTexture->GetDiffuseSpecularMapSRV();
     gD3DContext->PSSetShaderResources(0, 1, &sphereDiffuseSpecularMapSRV);
+    ID3D11ShaderResourceView* sphereNormalHeightMapSRV = gBrainNormal->GetDiffuseSpecularMapSRV();
+    gD3DContext->PSSetShaderResources(3, 1, &sphereNormalHeightMapSRV);
     gSphere->Render();
     
     //Set Cube Shaders
-    gD3DContext->VSSetShader(gPixelLightingVertexShader, nullptr, 0);
+    gD3DContext->VSSetShader(gNormalMappingVertexShader, nullptr, 0);
     gD3DContext->PSSetShader(gCubePixelShader, nullptr, 0);
 
     //Render Cube
-    ID3D11ShaderResourceView* cubeDiffuseSpecularMapSRV = gWoodTexture->GetDiffuseSpecularMapSRV();
-    ID3D11ShaderResourceView* cube2DiffuseSpecularMapSRV = gCobbleTexture->GetDiffuseSpecularMapSRV();
+    ID3D11ShaderResourceView* cubeDiffuseSpecularMapSRV = gTechTexture->GetDiffuseSpecularMapSRV();
+    ID3D11ShaderResourceView* cube2DiffuseSpecularMapSRV = gPatternTexture->GetDiffuseSpecularMapSRV();
     gD3DContext->PSSetShaderResources(0, 1, &cubeDiffuseSpecularMapSRV);
     gD3DContext->PSSetShaderResources(3, 1, &cube2DiffuseSpecularMapSRV);
+    //Render Cube
+    ID3D11ShaderResourceView* cubeNormalMapSRV = gTechNormal->GetDiffuseSpecularMapSRV();
+    ID3D11ShaderResourceView* cube2NormalMapSRV = gPatternNormal->GetDiffuseSpecularMapSRV();
+    gD3DContext->PSSetShaderResources(4, 1, &cubeNormalMapSRV);
+    gD3DContext->PSSetShaderResources(5, 1, &cube2NormalMapSRV);
 
     gCube->Render();
 
-    //Set Sphere2 Shaders
-    gD3DContext->VSSetShader(gNormalMappingVertexShader, nullptr, 0);
-    gD3DContext->PSSetShader(gNormalMappingPixelShader, nullptr, 0);
-
-    //Render Sphere2
-    ID3D11ShaderResourceView* sphere2DiffuseSpecularMapSRV = gPatternTexture->GetDiffuseSpecularMapSRV();
-    gD3DContext->PSSetShaderResources(0, 1, &sphere2DiffuseSpecularMapSRV);
-
-    ID3D11ShaderResourceView* sphere2ndDiffuseSpecularMapSRV = gBrainTexture->GetDiffuseSpecularMapSRV();
-    gD3DContext->PSSetShaderResources(1, 1, &sphere2ndDiffuseSpecularMapSRV);
-
-    ID3D11ShaderResourceView* normalMapSRV = gPatternNormal->GetDiffuseSpecularMapSRV();
-    gD3DContext->PSSetShaderResources(2, 1, &normalMapSRV);
-
-    ID3D11ShaderResourceView* normalMap2SRV = gBrainNormal->GetDiffuseSpecularMapSRV();
-    gD3DContext->PSSetShaderResources(3, 1, &normalMap2SRV);
-
-    gSphere2->Render();
+    
 
     //// Render lights ////
 
@@ -600,9 +677,13 @@ void RenderScene()
     gPerFrameConstants.light3Colour =           gLights[2]->GetColour() * gLights[2]->GetStrength();
     gPerFrameConstants.light3Position =         gLights[2]->GetModel()->Position();
 
+    gPerFrameConstants.light4Colour = gLights[3]->GetColour() * gLights[3]->GetStrength();
+    gPerFrameConstants.light4Position = gLights[3]->GetModel()->Position();
+
     gPerFrameConstants.ambientColour  = gAmbientColour;
     gPerFrameConstants.specularPower  = gSpecularPower;
     gPerFrameConstants.cameraPosition = gCamera->Position();
+    gPerFrameConstants.parallaxDepth = (gUseParallax ? gParallaxDepth : 0);
 
 
     //***************************************//
@@ -703,7 +784,7 @@ void UpdateScene(float frameTime)
     // Orbit the light - a bit of a cheat with the static variable [ask the tutor if you want to know what this is]
 	static float rotate = 0.0f;
     static bool go = true;
-	gLights[0]->GetModel()->SetPosition( gCharacter->Position() + CVector3{ cos(rotate) * gLightOrbit, 10, sin(rotate) * gLightOrbit } );
+	gLights[0]->GetModel()->SetPosition( gCharacter->Position() + CVector3{ cos(rotate) * gLightOrbit, 20, sin(rotate) * gLightOrbit } );
 	gLights[0]->GetModel()->FaceTarget(gCharacter->Position());
     if (go)  rotate -= gLightOrbitSpeed * frameTime;
     if (KeyHit(Key_1))  go = !go;
@@ -786,7 +867,11 @@ void UpdateScene(float frameTime)
 
     gLights[1]->SetColour(CVector3{ r, g, b });
 
-
+    // Toggle parallax
+    if (KeyHit(Key_2))
+    {
+        gUseParallax = !gUseParallax;
+    }
 
 
 	// Control camera (will update its view matrix)

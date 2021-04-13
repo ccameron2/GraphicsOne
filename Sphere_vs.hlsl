@@ -12,9 +12,9 @@
 
 // Vertex shader gets vertices from the mesh one at a time. It transforms their positions
 // from 3D into 2D (see lectures) and passes that position down the pipeline so pixels can be rendered. 
-LightingPixelShaderInput main(BasicVertex modelVertex)
+NormalPixelShaderInput main(TangentVertex modelVertex)
 {
-    LightingPixelShaderInput output; // This is the data the pixel shader requires from this vertex shader
+    NormalPixelShaderInput output; // This is the data the pixel shader requires from this vertex shader
 
     // Input position is x,y,z only - need a 4th element to multiply by a 4x4 matrix. Use 1 for a point (0 for a vector) - recall lectures
     float4 modelPosition = float4(modelVertex.position, 1);
@@ -25,8 +25,6 @@ LightingPixelShaderInput main(BasicVertex modelVertex)
     //Transform model normals into world space using world matrix to calculate per pixel lighting
     float4 modelNormal = float4(modelVertex.normal, 0);
     float4 worldNormal = mul(gWorldMatrix, modelNormal);
-    worldNormal = normalize(worldNormal);
-    output.worldNormal = worldNormal;
 
     //Set world position to be offset by wiggle variable
     worldPosition.x += sin(modelPosition.y + wiggle) * 0.3f;
@@ -37,8 +35,13 @@ LightingPixelShaderInput main(BasicVertex modelVertex)
     // and then use the projection matrix to transform the vertex to 2D projection space (project onto the 2D screen)
     float4 viewPosition = mul(gViewMatrix, worldPosition);
     output.projectedPosition = mul(gProjectionMatrix, viewPosition);
-  
+
     output.worldPosition = worldPosition.xyz; // Also pass world position to pixel shader for lighting
+
+    // Unlike the position, send the model's normal and tangent untransformed (in model space). The pixel shader will do the matrix work on normals
+    output.modelNormal = modelVertex.normal;
+    output.modelTangent = modelVertex.tangent; // Also pass world position to pixel shader for lighting
+
 
     // Pass texture coordinates (UVs) on to the pixel shader, the vertex shader doesn't need them
     output.uv = modelVertex.uv;

@@ -86,12 +86,16 @@ struct PerFrameConstants
     float      padding7;
     CVector3   light3Colour;
     float      padding8;
+    CVector3   light4Position;
+    float      padding9;
+    CVector3   light4Colour;
+    float      padding10;
 
     CVector3   ambientColour;
     float      specularPower;
 
     CVector3   cameraPosition;
-    float      gParallaxDepth;
+    float      parallaxDepth;
 
     float      wiggle = 0;
 };

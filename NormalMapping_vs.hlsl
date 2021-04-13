@@ -1,7 +1,6 @@
 //--------------------------------------------------------------------------------------
-// Light Model Vertex Shader
+// Basic Transformation and Lighting Vertex Shader
 //--------------------------------------------------------------------------------------
-// Basic matrix transformations only
 
 #include "Common.hlsli" // Shaders can also use include files - note the extension
 
@@ -10,8 +9,10 @@
 // Shader code
 //--------------------------------------------------------------------------------------
 
-// Vertex shader gets vertices from the mesh one at a time. It transforms their positions
-// from 3D into 2D (see lectures) and passes that position down the pipeline so pixels can be rendered. 
+//****| INFO |*******************************************************************************************//
+// The vertex shader for parallax mapping is identical to normal mapping. The parallax adjustment occurs
+// in the pixel shader
+//*******************************************************************************************************//
 NormalPixelShaderInput main(TangentVertex modelVertex)
 {
     NormalPixelShaderInput output; // This is the data the pixel shader requires from this vertex shader
@@ -20,27 +21,17 @@ NormalPixelShaderInput main(TangentVertex modelVertex)
     float4 modelPosition = float4(modelVertex.position, 1);
 
     // Multiply by the world matrix passed from C++ to transform the model vertex position into world space. 
-    float4 worldPosition = mul(gWorldMatrix, modelPosition);
-
-    //Transform model normals into world space using world matrix to calculate per pixel lighting
-    float4 modelNormal = float4(modelVertex.normal, 0);
-    float4 worldNormal = mul(gWorldMatrix, modelNormal);
-    worldNormal = normalize(worldNormal);
-
-    //Set world position to be offset by wiggle variable
-    worldPosition.x += sin(modelPosition.y + wiggle) * 0.3f;
-    worldPosition.y += sin(modelPosition.x + wiggle) * 0.3f;
-    worldPosition += worldNormal * (sin(wiggle) + 1.0f) * 0.3f;
-
     // In a similar way use the view matrix to transform the vertex from world space into view space (camera's point of view)
     // and then use the projection matrix to transform the vertex to 2D projection space (project onto the 2D screen)
+    float4 worldPosition = mul(gWorldMatrix, modelPosition);
     float4 viewPosition = mul(gViewMatrix, worldPosition);
     output.projectedPosition = mul(gProjectionMatrix, viewPosition);
 
     output.worldPosition = worldPosition.xyz; // Also pass world position to pixel shader for lighting
 
-    output.modelTangent = modelVertex.tangent;
+    // Unlike the position, send the model's normal and tangent untransformed (in model space). The pixel shader will do the matrix work on normals
     output.modelNormal = modelVertex.normal;
+    output.modelTangent = modelVertex.tangent;
 
     // Pass texture coordinates (UVs) on to the pixel shader, the vertex shader doesn't need them
     output.uv = modelVertex.uv;

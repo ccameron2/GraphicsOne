@@ -48,7 +48,6 @@ struct NormalPixelShaderInput
                                             // to the pixel shader and so it uses the special semantic "SV_Position"
                                             // because the shader needs to identify this important information
     float3 worldPosition : worldPosition; // Data required for lighting calculations in the pixel shader
-
     float3 modelNormal   : modelNormal;   // --"--
     float3 modelTangent  : modelTangent;  // --"--
 
@@ -101,6 +100,11 @@ cbuffer PerFrameConstants : register(b0) // The b0 gives this constant buffer th
     float    padding7;
     float3   gLight3Colour;
     float    padding8;
+
+    float3   gLight4Position;
+    float    padding9;
+    float3   gLight4Colour;
+    float    padding10;
 
     float3   gAmbientColour;
     float    gSpecularPower;
