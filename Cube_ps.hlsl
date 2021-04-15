@@ -265,7 +265,7 @@ float4 main(NormalPixelShaderInput input) : SV_Target
 	float4 textureColour2 = DiffuseSpecularMap2.Sample(TexSampler, offsetTexCoord2);
 	
 	
-	float sinWiggle = sin(wiggle * 0.1);
+	float sinWiggle = sin(wiggle * 0.02);
 	float maxWiggle = max(sinWiggle, 0);
 	
 	//If sinWiggle is negative, make it positive.

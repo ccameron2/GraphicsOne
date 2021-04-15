@@ -48,7 +48,7 @@ Mesh* gCubeMesh;
 Mesh* gTreeMesh;
 Mesh* gBatMesh;
 
-Model* gCharacter;
+Model* gFox;
 Model* gCrate;
 Model* gGround;
 Model* gSphere;
@@ -130,7 +130,7 @@ ID3D11Buffer*     gPerModelConstantBuffer; // --"--
 //--------------------------------------------------------------------------------------
 // Textures
 //--------------------------------------------------------------------------------------
-const int NUM_TEXTURES = 13;
+const int NUM_TEXTURES = 17;
 // DirectX objects controlling textures used in this lab
 //ID3D11Resource*           gCharacterDiffuseSpecularMap    = nullptr; // This object represents the memory used by the texture on the GPU
 //ID3D11ShaderResourceView* gCharacterDiffuseSpecularMapSRV = nullptr; // This object is used to give shaders access to the texture above (SRV = shader resource view)
@@ -159,7 +159,7 @@ bool gUseParallax = true;
 Texture* gTextures[NUM_TEXTURES] = { gTrollTexture, gCargoTexture, gGrassTexture, gFlareTexture,
                                         gWoodTexture, gTechTexture, gCobbleTexture, gBrainTexture,
                                             gBrainNormal, gPatternNormal, gPatternTexture, gFoxTexture,
-                                                gBatTexture };
+                                                gBatTexture, gCobbleNormal, gTechNormal, gWallTexture, gWallNormal };
 
 //--------------------------------------------------------------------------------------
 // Light Helper Functions
@@ -234,7 +234,11 @@ bool InitGeometry()
         ID3D11Resource* DiffuseSpecularMap = nullptr;
         ID3D11ShaderResourceView* DiffuseSpecularMapSRV = nullptr;
         std::string TextureName = gTextures[i]->GetTextureName();
-        LoadTexture(TextureName, &DiffuseSpecularMap, &DiffuseSpecularMapSRV);
+        if (!LoadTexture(TextureName, &DiffuseSpecularMap, &DiffuseSpecularMapSRV))
+        {
+            gLastError = "Error creating shadow map texture";
+            return false;
+        }
         gTextures[i]->SetDiffuseSpecularMap(DiffuseSpecularMap);
         gTextures[i]->SetDiffuseSpecularMapSRV(DiffuseSpecularMapSRV);
     }
@@ -320,13 +324,12 @@ bool InitScene()
 {
     //// Set up scene ////
 
-    gCharacter = new Model(gCharacterMesh);
+    gFox = new Model(gCharacterMesh);
     gCrate     = new Model(gCrateMesh);
     gGround    = new Model(gGroundMesh);
     gSphere    = new Model(gSphereMesh);
     gTeapot    = new Model(gTeapotMesh);
     gCube      = new Model(gCubeMesh);
-    gBat       = new Model(gBatMesh);
 
     //Bats
     for (int i = 0; i < MAX_BATS; i++)
@@ -344,9 +347,9 @@ bool InitScene()
     }
 
 	// Initial positions
-	gCharacter->SetPosition({ -120, 2, 150 });
-    gCharacter->SetScale(0.2);
-    gCharacter->SetRotation({ 0, ToRadians(220), 0 });
+	gFox->SetPosition({ -140, 2, 140 });
+    gFox->SetScale(0.2);
+    gFox->SetRotation({ 0, ToRadians(220), 0 });
 	gCrate->SetPosition({ 58, 4, 100 });
 	gCrate->SetScale(6);
 	gCrate->SetRotation({ 0.0f, ToRadians(-180.0f), 0.0f });
@@ -366,21 +369,21 @@ bool InitScene()
     gLights[0]->SetStrength(10);
     gLights[0]->GetModel()->SetPosition({ 30, 20, 0 });
     gLights[0]->GetModel()->SetScale(pow(gLights[0]->GetStrength(), 0.7f)); // Convert light strength into a nice value for the scale of the light - equation is ad-hoc.
-	gLights[0]->GetModel()->FaceTarget(gCharacter->Position());
+	gLights[0]->GetModel()->FaceTarget(gFox->Position());
                 
     gLights[1]->SetColour(CVector3{ 1.0f, 0.8f, 0.2f });
-    gLights[1]->SetStrength(40);
+    gLights[1]->SetStrength(50);
     gLights[1]->GetModel()->SetPosition({ -15, 40, 120 });
     gLights[1]->GetModel()->SetScale(pow(gLights[1]->GetStrength(), 0.7f));
 	gLights[1]->GetModel()->FaceTarget({ gTeapot->Position() });
                 
     gLights[2]->SetColour(CVector3{ 1.0f, 0.8f, 0.2f });
-    gLights[2]->SetStrength(20);
+    gLights[2]->SetStrength(15);
     gLights[2]->GetModel()->SetPosition({ 50, 40, -110 });
     gLights[2]->GetModel()->SetScale(pow(gLights[2]->GetStrength(), 0.7f));
 
     gLights[3]->SetColour(CVector3{ 1.0f, 0.8f, 0.2f });
-    gLights[3]->SetStrength(20);
+    gLights[3]->SetStrength(15);
     gLights[3]->GetModel()->SetPosition({ -120, 60, 150 });
     gLights[3]->GetModel()->SetScale(pow(gLights[3]->GetStrength(), 0.7f));
 
@@ -406,23 +409,14 @@ void ReleaseResources()
     if (gShadowMap2SRV)           gShadowMap2SRV->Release();
     if (gShadowMap2Texture)       gShadowMap2Texture->Release();
 
-    if (gFlareTexture->GetDiffuseSpecularMapSRV()) gFlareTexture->GetDiffuseSpecularMapSRV()->Release();
-    if (gFlareTexture->GetDiffuseSpecularMap())    gFlareTexture->GetDiffuseSpecularMap()->Release();
-    if (gGrassTexture->GetDiffuseSpecularMapSRV()) gGrassTexture->GetDiffuseSpecularMapSRV()->Release();
-    if (gGrassTexture->GetDiffuseSpecularMap())    gGrassTexture->GetDiffuseSpecularMap()->Release();
-    if (gCargoTexture->GetDiffuseSpecularMapSRV()) gCargoTexture->GetDiffuseSpecularMapSRV()->Release();
-    if (gCargoTexture->GetDiffuseSpecularMap())    gCargoTexture->GetDiffuseSpecularMap()->Release();
-    if (gTrollTexture->GetDiffuseSpecularMapSRV()) gTrollTexture->GetDiffuseSpecularMapSRV()->Release();
-    if (gTrollTexture->GetDiffuseSpecularMap())    gTrollTexture->GetDiffuseSpecularMap()->Release();
-    if (gWoodTexture->GetDiffuseSpecularMapSRV())   gWoodTexture->GetDiffuseSpecularMapSRV()->Release();
-    if (gWoodTexture->GetDiffuseSpecularMap())      gWoodTexture->GetDiffuseSpecularMap()->Release();
-    if (gTechTexture->GetDiffuseSpecularMapSRV())   gTechTexture->GetDiffuseSpecularMapSRV()->Release();
-    if (gTechTexture->GetDiffuseSpecularMap())      gTechTexture->GetDiffuseSpecularMap()->Release();
-    if (gCobbleTexture->GetDiffuseSpecularMapSRV()) gCobbleTexture->GetDiffuseSpecularMapSRV()->Release();
-    if (gCobbleTexture->GetDiffuseSpecularMap())    gCobbleTexture->GetDiffuseSpecularMap()->Release();
-    if (gBrainTexture->GetDiffuseSpecularMap())     gBrainTexture->GetDiffuseSpecularMap()->Release();
-    if (gBrainNormal->GetDiffuseSpecularMap())      gBrainNormal->GetDiffuseSpecularMap()->Release();
-
+    for (int i = 0; i < NUM_TEXTURES; i++)
+    {
+        if (gTextures[i]->GetDiffuseSpecularMap() && gTextures[i]->GetDiffuseSpecularMapSRV())
+        {
+            gTextures[i]->GetDiffuseSpecularMap()->Release();
+            gTextures[i]->GetDiffuseSpecularMapSRV()->Release();
+        }
+    }
 
     if (gPerModelConstantBuffer)  gPerModelConstantBuffer->Release();
     if (gPerFrameConstantBuffer)  gPerFrameConstantBuffer->Release();
@@ -437,7 +431,7 @@ void ReleaseResources()
     delete gCamera;    gCamera    = nullptr;
     delete gGround;    gGround    = nullptr;
     delete gCrate;     gCrate     = nullptr;
-    delete gCharacter; gCharacter = nullptr;
+    delete gFox; gFox = nullptr;
     delete gSphere;    gSphere    = nullptr;
     delete gTeapot;    gTeapot    = nullptr;
     delete gCube;      gCube      = nullptr;
@@ -497,7 +491,7 @@ void RenderDepthBufferFromLight(int lightIndex)
 
     // Render models - no state changes required between each object in this situation (no textures used in this step)
     gGround->Render();
-    gCharacter->Render();
+    gFox->Render();
     gCrate->Render();
     gSphere->Render();
     gTeapot->Render();
@@ -571,7 +565,7 @@ void RenderSceneFromCamera(Camera* camera)
 
     ID3D11ShaderResourceView* characterDiffuseSpecularMapSRV = gFoxTexture->GetDiffuseSpecularMapSRV();
     gD3DContext->PSSetShaderResources(0, 1, &characterDiffuseSpecularMapSRV);
-    gCharacter->Render();
+    gFox->Render();
 
     //Render Crate
     ID3D11ShaderResourceView* crateDiffuseSpecularMapSRV = gCargoTexture->GetDiffuseSpecularMapSRV();
@@ -611,19 +605,17 @@ void RenderSceneFromCamera(Camera* camera)
     gD3DContext->PSSetShader(gCubePixelShader, nullptr, 0);
 
     //Render Cube
-    ID3D11ShaderResourceView* cubeDiffuseSpecularMapSRV = gTechTexture->GetDiffuseSpecularMapSRV();
-    ID3D11ShaderResourceView* cube2DiffuseSpecularMapSRV = gPatternTexture->GetDiffuseSpecularMapSRV();
+    ID3D11ShaderResourceView* cubeDiffuseSpecularMapSRV = gWallTexture->GetDiffuseSpecularMapSRV();
+    ID3D11ShaderResourceView* cube2DiffuseSpecularMapSRV = gTechTexture->GetDiffuseSpecularMapSRV();
     gD3DContext->PSSetShaderResources(0, 1, &cubeDiffuseSpecularMapSRV);
     gD3DContext->PSSetShaderResources(3, 1, &cube2DiffuseSpecularMapSRV);
     //Render Cube
-    ID3D11ShaderResourceView* cubeNormalMapSRV = gTechNormal->GetDiffuseSpecularMapSRV();
-    ID3D11ShaderResourceView* cube2NormalMapSRV = gPatternNormal->GetDiffuseSpecularMapSRV();
+    ID3D11ShaderResourceView* cubeNormalMapSRV = gWallNormal->GetDiffuseSpecularMapSRV();
+    ID3D11ShaderResourceView* cube2NormalMapSRV = gTechNormal->GetDiffuseSpecularMapSRV();
     gD3DContext->PSSetShaderResources(4, 1, &cubeNormalMapSRV);
     gD3DContext->PSSetShaderResources(5, 1, &cube2NormalMapSRV);
 
     gCube->Render();
-
-    
 
     //// Render lights ////
 
@@ -779,13 +771,13 @@ void RenderScene()
 void UpdateScene(float frameTime)
 {
 	// Control sphere (will update its world matrix)
-	gCharacter->Control(frameTime, Key_I, Key_K, Key_J, Key_L, Key_U, Key_O, Key_Period, Key_Comma );
+	gFox->Control(frameTime, Key_I, Key_K, Key_J, Key_L, Key_U, Key_O, Key_Period, Key_Comma );
 
     // Orbit the light - a bit of a cheat with the static variable [ask the tutor if you want to know what this is]
 	static float rotate = 0.0f;
     static bool go = true;
-	gLights[0]->GetModel()->SetPosition( gCharacter->Position() + CVector3{ cos(rotate) * gLightOrbit, 20, sin(rotate) * gLightOrbit } );
-	gLights[0]->GetModel()->FaceTarget(gCharacter->Position());
+	gLights[0]->GetModel()->SetPosition( gFox->Position() + CVector3{ cos(rotate) * gLightOrbit, 20, sin(rotate) * gLightOrbit } );
+	gLights[0]->GetModel()->FaceTarget(gFox->Position());
     if (go)  rotate -= gLightOrbitSpeed * frameTime;
     if (KeyHit(Key_1))  go = !go;
 
