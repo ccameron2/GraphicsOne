@@ -38,7 +38,7 @@ const float MOVEMENT_SPEED = 50.0f; // 50 units per second for movement (what a 
 
 
 // Meshes, models and cameras, same meaning as TL-Engine. Meshes prepared in InitGeometry function, Models & camera in InitScene
-Mesh* gCharacterMesh;
+Mesh* gFoxMesh;
 Mesh* gCrateMesh;
 Mesh* gGroundMesh;
 Mesh* gSphereMesh;
@@ -61,13 +61,18 @@ Mesh* gWizardMesh;
 Mesh* gBoxMesh;
 Mesh* gWellMesh;
 
+const int MAX_MESHES = 22;
+Mesh* gMeshes[MAX_MESHES] = { gFoxMesh, gCrateMesh, gGroundMesh, gSphereMesh, gLightMesh,
+                              gTeapotMesh, gCubeMesh, gTreeMesh, gBatMesh, gGlassCubeMesh,
+                              gSpriteMesh, gTankMesh, gHatMesh, gPotionMesh, gCatMesh, gTrunkMesh,
+                              gLeavesMesh, gTowerMesh , gGriffinMesh, gWizardMesh, gBoxMesh, gWellMesh };
+
 Model* gFox;
 Model* gCrate;
 Model* gGround;
 Model* gSphere;
 Model* gTeapot;
 Model* gCube;
-Model* gTree;
 Model* gBat;
 Model* gGlassCube;
 Model* gSprite;
@@ -83,11 +88,17 @@ Model* gWizard;
 Model* gBox;
 Model* gWell;
 
-const int MAX_TREES = 10;
-Model* gTrees[MAX_TREES];
+const int NUM_MODELS = 20;
+Model* gModels[NUM_MODELS] = { gFox, gCrate, gGround, gSphere,
+                              gTeapot, gCube, gBat, gGlassCube,
+                              gSprite, gTank, gHat, gPotion, gCat, gTrunk,
+                              gLeaves, gTower , gGriffin, gWizard, gBox, gWell };
 
-const int MAX_BATS = 10;
-Model* gBats[MAX_BATS];
+const int NUM_TREES = 10;
+Model* gTrees[NUM_TREES];
+
+const int NUM_BATS = 10;
+Model* gBats[NUM_BATS];
 
 Camera* gCamera;
 
@@ -156,7 +167,7 @@ ID3D11Buffer*     gPerModelConstantBuffer; // --"--
 //--------------------------------------------------------------------------------------
 // Textures
 //--------------------------------------------------------------------------------------
-const int NUM_TEXTURES = 31;
+const int NUM_TEXTURES = 24;
 // DirectX objects controlling textures used in this lab
 //ID3D11Resource*           gCharacterDiffuseSpecularMap    = nullptr; // This object represents the memory used by the texture on the GPU
 //ID3D11ShaderResourceView* gCharacterDiffuseSpecularMapSRV = nullptr; // This object is used to give shaders access to the texture above (SRV = shader resource view)
@@ -164,26 +175,18 @@ Texture* gTrollTexture = new Texture("TrollDiffuseSpecular.dds");
 Texture* gCargoTexture = new Texture("CargoA.dds");
 Texture* gGrassTexture = new Texture("GrassDiffuseSpecular.dds");
 Texture* gFlareTexture = new Texture("Flare.jpg");
-Texture* gWoodTexture = new Texture("WoodDiffuseSpecular.dds");
-Texture* gWoodNormal = new Texture("WoodDiffuseSpecular.dds");
-Texture* gTechTexture = new Texture("TechDiffuseSpecular.dds");
-Texture* gTechNormal = new Texture("TechNormalHeight.dds");
-Texture* gCobbleTexture = new Texture("CobbleDiffuseSpecular.dds");
-Texture* gCobbleNormal = new Texture("CobbleNormalHeight.dds");
-Texture* gBrainTexture = new Texture("BrainDiffuseSpecular.dds");
-Texture* gBrainNormal = new Texture("BrainNormalHeight.dds");
-Texture* gPatternNormal = new Texture("PatternNormalHeight.dds");
-Texture* gPatternTexture = new Texture("PatternDiffuseSpecular.dds");
+Texture* gWoodTexture = new Texture("WoodDiffuseSpecular.dds", "WoodDiffuseSpecular.dds");
+Texture* gTechTexture = new Texture("TechDiffuseSpecular.dds", "TechNormalHeight.dds");
+Texture* gCobbleTexture = new Texture("CobbleDiffuseSpecular.dds", "CobbleNormalHeight.dds");
+Texture* gBrainTexture = new Texture("BrainDiffuseSpecular.dds", "BrainNormalHeight.dds");
+Texture* gPatternTexture = new Texture("PatternDiffuseSpecular.dds", "PatternNormalHeight.dds");
 Texture* gFoxTexture = new Texture("fox.png");
 Texture* gBatTexture = new Texture("Bat.png");
-Texture* gWallTexture = new Texture("WallDiffuseSpecular.dds");
-Texture* gWallNormal = new Texture("WallNormalHeight.dds");
+Texture* gWallTexture = new Texture("WallDiffuseSpecular.dds", "WallNormalHeight.dds");
 Texture* gGlassTexture = new Texture("Glass.jpg");
 Texture* gSpriteTexture = new Texture("wizard.jpg");
-Texture* gMetalTexture = new Texture("MetalDiffuseSpecular.dds");
-Texture* gMetalNormal = new Texture("MetalNormal.dds");
-Texture* gHatTexture = new Texture("hat.jpeg");
-Texture* gHatNormal = new Texture("hatnormal.png");
+Texture* gMetalTexture = new Texture("MetalDiffuseSpecular.dds", "MetalNormal.dds");
+Texture* gHatTexture = new Texture("hat.jpeg", "hatnormal.png");
 Texture* gPotionTexture = new Texture("potion.png");
 Texture* gTankTexture = new Texture("Tank.dds");
 Texture* gCatTexture = new Texture("CatTexture.dds");
@@ -198,10 +201,9 @@ bool gUseParallax = true;
 
 Texture* gTextures[NUM_TEXTURES] = { gTrollTexture, gCargoTexture, gGrassTexture, gFlareTexture,
                                      gWoodTexture, gTechTexture, gCobbleTexture, gBrainTexture,
-                                     gBrainNormal, gPatternNormal, gPatternTexture, gFoxTexture,
-                                     gBatTexture, gCobbleNormal, gTechNormal, gWallTexture, gWallNormal, 
-                                     gGlassTexture, gSpriteTexture, gMetalTexture, gMetalNormal, gHatNormal, 
-                                     gHatTexture, gPotionTexture, gTankTexture, gCatTexture , gTrunkTexture, 
+                                     gPatternTexture, gFoxTexture, gBatTexture, gWallTexture, 
+                                     gGlassTexture, gSpriteTexture, gMetalTexture, gHatTexture,
+                                     gPotionTexture, gTankTexture, gCatTexture , gTrunkTexture, 
                                      gLeavesTexture, gGriffinTexture, gTowerTexture, gWizardTexture };
 
 //--------------------------------------------------------------------------------------
@@ -233,7 +235,7 @@ bool InitGeometry()
     // IMPORTANT NOTE: Will only keep the first object from the mesh - multipart objects will have parts missing - see later lab for more robust loader
     try 
     {
-        gCharacterMesh = new Mesh("Fox.fbx");
+        gFoxMesh = new Mesh("Fox.fbx");
         gCrateMesh     = new Mesh("CargoContainer.x");
         gGroundMesh    = new Mesh("Hills.x");
         gSphereMesh    = new Mesh("Sphere.x", true);
@@ -291,13 +293,26 @@ bool InitGeometry()
         ID3D11Resource* DiffuseSpecularMap = nullptr;
         ID3D11ShaderResourceView* DiffuseSpecularMapSRV = nullptr;
         std::string TextureName = gTextures[i]->GetTextureName();
+        ID3D11Resource* NormalMap = nullptr;
+        ID3D11ShaderResourceView* NormalMapSRV = nullptr;
+        std::string NormalName = gTextures[i]->GetNormalName();
         if (!LoadTexture(TextureName, &DiffuseSpecularMap, &DiffuseSpecularMapSRV))
         {
             gLastError = "Error creating texture";
             return false;
         }
+        if (NormalName != "")
+        {
+            if (!LoadTexture(NormalName, &NormalMap, &NormalMapSRV))
+            {
+                gLastError = "Error creating texture normal";
+                return false;
+            }
+        }
         gTextures[i]->SetDiffuseSpecularMap(DiffuseSpecularMap);
         gTextures[i]->SetDiffuseSpecularMapSRV(DiffuseSpecularMapSRV);
+        gTextures[i]->SetNormalMap(NormalMap);
+        gTextures[i]->SetNormalMapSRV(NormalMapSRV);
     }
 
 	//**** Create Shadow Map texture ****//
@@ -381,7 +396,7 @@ bool InitScene()
 {
     //// Set up scene ////
 
-    gFox       = new Model(gCharacterMesh);
+    gFox       = new Model(gFoxMesh);
     gCrate     = new Model(gCrateMesh);
     gGround    = new Model(gGroundMesh);
     gSphere    = new Model(gSphereMesh);
@@ -402,14 +417,14 @@ bool InitScene()
     gWell      = new Model(gWellMesh);
 
     //Bats
-    for (int i = 0; i < MAX_BATS; i++)
+    for (int i = 0; i < NUM_BATS; i++)
     {
         gBats[i] = new Model(gBatMesh);
         gBats[i]->SetPosition({ -130 + 20 * sin(i * 10.0f), 24 ,150 + 20 * cos(i * 10.0f) });
         gBats[i]->SetScale(0.1);
     }
     //Trees
-    for (int i = 0; i < MAX_TREES; i++)
+    for (int i = 0; i < NUM_TREES; i++)
     {
         gTrees[i] = new Model(gTreeMesh);
         gTrees[i]->SetPosition({ -170 , 3, 100 + i * 10.0f });
@@ -417,7 +432,7 @@ bool InitScene()
     }
 
 	// Initial positions
-	gFox->SetPosition({ -140, 2, 150 });
+	gFox->SetPosition({ -135, 2, 150 });
     gFox->SetScale(0.2);
     gFox->SetRotation({ 0, ToRadians(220), 0 });
 	gCrate->SetPosition({ 58, 4, 100 });
@@ -436,17 +451,17 @@ bool InitScene()
     gHat->SetPosition(gFox->Position() + CVector3{5, 17.5f, 6.2f });
     gHat->SetRotation({ ToRadians(-6.0f), 0.0f , ToRadians(10.0f) });
     gHat->SetScale(11);
-    gCat->SetPosition({ -130, 2, 145 });
+    gCat->SetPosition({ -125, 2, 145 });
     gCat->SetRotation({ 0.0f, ToRadians(-100.0f), 0.0f });
     gCat->SetScale(0.013);
     gPotion->SetPosition(gCat->Position() + CVector3{ 5.8f, 4.0f, 1.0f });
     gPotion->SetScale(0.01);
     gTrunk->SetScale(0.15);
     gLeaves->SetScale(gTrunk->Scale());
-    gTrunk->SetPosition({-140,2,180});
+    gTrunk->SetPosition({-140,2,188});
     gLeaves->SetPosition(gTrunk->Position() + CVector3{ 0, 30.0f, 0 });
     gLeaves->SetRotation({ 0,ToRadians(180) ,0 });
-    gGriffin->SetPosition({-150,80,100});
+    gGriffin->SetPosition({-160,80,100});
     gGriffin->SetRotation({ 0,ToRadians(240) ,0 });
     gGriffin->SetScale(0.1);
     gTower->SetPosition({ -117.0f,22.0f,30.6f });
@@ -471,13 +486,13 @@ bool InitScene()
 
     gLights[0]->SetColour(CVector3{ 0.8f, 0.8f, 1.0f });
     gLights[0]->SetStrength(10);
-    gLights[0]->GetModel()->SetPosition({ 30, 20, 0 });
+    gLights[0]->GetModel()->SetPosition({ 30, 28, 0 });
     gLights[0]->GetModel()->SetScale(pow(gLights[0]->GetStrength(), 0.7f)); // Convert light strength into a nice value for the scale of the light - equation is ad-hoc.
 	gLights[0]->GetModel()->FaceTarget(gFox->Position());
                 
     gLights[1]->SetColour(CVector3{ 1.0f, 0.8f, 0.2f });
     gLights[1]->SetStrength(50);
-    gLights[1]->GetModel()->SetPosition({ -15, 40, 120 });
+    gLights[1]->GetModel()->SetPosition({ -15, 60, 120 });
     gLights[1]->GetModel()->SetScale(pow(gLights[1]->GetStrength(), 0.7f));
 	gLights[1]->GetModel()->FaceTarget({ gTeapot->Position() });
                 
@@ -488,7 +503,7 @@ bool InitScene()
 
     gLights[3]->SetColour(CVector3{ 1.0f, 0.8f, 0.2f });
     gLights[3]->SetStrength(25);
-    gLights[3]->GetModel()->SetPosition({ -120, 120, 130 });
+    gLights[3]->GetModel()->SetPosition({ -120, 80, 130 });
     gLights[3]->GetModel()->SetScale(pow(gLights[3]->GetStrength(), 0.7f));
 
     //// Set up camera ////
@@ -528,61 +543,37 @@ void ReleaseResources()
     ReleaseShaders();
 
     // See note in InitGeometry about why we're not using unique_ptr and having to manually delete
+    delete gCamera;    gCamera = nullptr;
+
+    //Delete light models
     for (int i = 0; i < NUM_LIGHTS; ++i)
     {
         delete gLights[i]->GetModel();  gLights[i]->SetModel(nullptr);
     }
-    delete gCamera;    gCamera    = nullptr;
-    delete gGround;    gGround    = nullptr;
-    delete gCrate;     gCrate     = nullptr;
-    delete gFox;       gFox = nullptr;
-    delete gSphere;    gSphere    = nullptr;
-    delete gTeapot;    gTeapot    = nullptr;
-    delete gCube;      gCube      = nullptr;
-    delete gTree;      gTree      = nullptr;
-    delete gBat;       gBat       = nullptr;
-    delete gTank;      gTank = nullptr;
-    delete gHat;       gHat = nullptr;
-    delete gPotion;    gPotion = nullptr;
-    delete gCat;       gCat = nullptr;
-    delete gTrunk;     gTrunk = nullptr;
-    delete gLeaves;    gLeaves = nullptr;
-    delete gTower;     gTower = nullptr;
-    delete gGriffin;   gGriffin = nullptr;
-    delete gWizard;    gWizard = nullptr;
-    delete gBox;       gBox = nullptr;
-    delete gWell;      gWell = nullptr;
 
+    //Delete Unique Models
+    for (int i = 0; i < NUM_MODELS; i++)
+    {
+        delete gModels[i]; gModels[i] = nullptr;
+    }
 
-    for (int i = 0; i < MAX_TREES; i++)
+    //Delete Trees
+    for (int i = 0; i < NUM_TREES; i++)
     {
         delete gTrees[i]; gTrees[i] = nullptr;
     }
-    for (int i = 0; i < MAX_BATS; i++)
+
+    //Delete Bats
+    for (int i = 0; i < NUM_BATS; i++)
     {
         delete gBats[i]; gTrees[i] = nullptr;
     }
 
-    delete gLightMesh;     gLightMesh     = nullptr;
-    delete gGroundMesh;    gGroundMesh    = nullptr;
-    delete gCrateMesh;     gCrateMesh     = nullptr;
-    delete gCharacterMesh; gCharacterMesh = nullptr;
-    delete gSphereMesh;    gSphereMesh    = nullptr;
-    delete gTeapotMesh;    gTeapotMesh    = nullptr;
-    delete gCubeMesh;      gCubeMesh      = nullptr;
-    delete gTreeMesh;      gTreeMesh      = nullptr;
-    delete gBatMesh;       gBatMesh       = nullptr;
-    delete gTankMesh;      gTankMesh      = nullptr;
-    delete gHatMesh;       gHatMesh       = nullptr;
-    delete gPotionMesh;    gPotionMesh    = nullptr;
-    delete gCatMesh;       gCatMesh       = nullptr;
-    delete gTrunkMesh;     gTrunkMesh     = nullptr;
-    delete gLeavesMesh;    gLeavesMesh    = nullptr;
-    delete gTowerMesh;     gTowerMesh     = nullptr;
-    delete gGriffinMesh;   gGriffinMesh   = nullptr;
-    delete gWizardMesh;    gWizardMesh    = nullptr;
-    delete gBoxMesh;       gBoxMesh       = nullptr;
-    delete gWellMesh;      gWellMesh      = nullptr;
+    //Delete Meshes
+    for (int i = 0; i < NUM_MODELS; i++)
+    {
+        delete gMeshes[i]; gMeshes[i] = nullptr;
+    }
 
 }
 
@@ -624,11 +615,11 @@ void RenderDepthBufferFromLight(int lightIndex)
     gSphere->Render();
     gTeapot->Render();
     gCube->Render();
-    for (int i = 0; i < MAX_TREES; i++)
+    for (int i = 0; i < NUM_TREES; i++)
     {
         gTrees[i]->Render();
     }
-    for (int i = 0; i < MAX_BATS; i++)
+    for (int i = 0; i < NUM_BATS; i++)
     {
         gBats[i]->Render();
     }
@@ -691,7 +682,7 @@ void RenderSceneFromCamera(Camera* camera)
     ID3D11ShaderResourceView* treeDiffuseSpecularMapSRV = gGrassTexture->GetDiffuseSpecularMapSRV();
     gD3DContext->PSSetShaderResources(0, 1, &treeDiffuseSpecularMapSRV);
 
-    for (int i = 0; i < MAX_TREES; i++)
+    for (int i = 0; i < NUM_TREES; i++)
     {
         gTrees[i]->Render();
     }
@@ -699,7 +690,7 @@ void RenderSceneFromCamera(Camera* camera)
     ID3D11ShaderResourceView* batDiffuseSpecularMapSRV = gBatTexture->GetDiffuseSpecularMapSRV();
     gD3DContext->PSSetShaderResources(0, 1, &batDiffuseSpecularMapSRV);
 
-    for (int i = 0; i < MAX_BATS; i++)
+    for (int i = 0; i < NUM_BATS; i++)
     {
         gBats[i]->Render();
     }
@@ -767,7 +758,7 @@ void RenderSceneFromCamera(Camera* camera)
     ID3D11ShaderResourceView* hatDiffuseSpecularMapSRV = gHatTexture->GetDiffuseSpecularMapSRV();
     gD3DContext->PSSetShaderResources(0, 1, &hatDiffuseSpecularMapSRV);
 
-    ID3D11ShaderResourceView* hatNormalMapSRV = gHatNormal->GetDiffuseSpecularMapSRV();
+    ID3D11ShaderResourceView* hatNormalMapSRV = gHatTexture->GetNormalMapSRV();
     gD3DContext->PSSetShaderResources(3, 1, &hatNormalMapSRV);
 
     gHat->Render();
@@ -778,10 +769,10 @@ void RenderSceneFromCamera(Camera* camera)
     gD3DContext->PSSetShader(gParallaxMappingPixelShader, nullptr, 0);
     
     //Render Teapot
-    ID3D11ShaderResourceView* teapotDiffuseSpecularMapSRV = gCobbleTexture->GetDiffuseSpecularMapSRV();
+    ID3D11ShaderResourceView* teapotDiffuseSpecularMapSRV = gTechTexture->GetDiffuseSpecularMapSRV();
     gD3DContext->PSSetShaderResources(0, 1, &teapotDiffuseSpecularMapSRV);
 
-    ID3D11ShaderResourceView* teapotNormalMapSRV = gCobbleNormal->GetDiffuseSpecularMapSRV();
+    ID3D11ShaderResourceView* teapotNormalMapSRV = gTechTexture->GetNormalMapSRV();
     gD3DContext->PSSetShaderResources(3, 1, &teapotNormalMapSRV);
 
     gTeapot->Render();
@@ -793,7 +784,7 @@ void RenderSceneFromCamera(Camera* camera)
     //Render Sphere
     ID3D11ShaderResourceView* sphereDiffuseSpecularMapSRV = gBrainTexture->GetDiffuseSpecularMapSRV();
     gD3DContext->PSSetShaderResources(0, 1, &sphereDiffuseSpecularMapSRV);
-    ID3D11ShaderResourceView* sphereNormalHeightMapSRV = gBrainNormal->GetDiffuseSpecularMapSRV();
+    ID3D11ShaderResourceView* sphereNormalHeightMapSRV = gBrainTexture->GetNormalMapSRV();
     gD3DContext->PSSetShaderResources(3, 1, &sphereNormalHeightMapSRV);
     gSphere->Render();
     
@@ -803,13 +794,13 @@ void RenderSceneFromCamera(Camera* camera)
 
     //Render Cube
     ID3D11ShaderResourceView* cubeDiffuseSpecularMapSRV = gWallTexture->GetDiffuseSpecularMapSRV();
-    ID3D11ShaderResourceView* cube2DiffuseSpecularMapSRV = gTechTexture->GetDiffuseSpecularMapSRV();
+    ID3D11ShaderResourceView* cube2DiffuseSpecularMapSRV = gCobbleTexture->GetDiffuseSpecularMapSRV();
     gD3DContext->PSSetShaderResources(0, 1, &cubeDiffuseSpecularMapSRV);
     gD3DContext->PSSetShaderResources(3, 1, &cube2DiffuseSpecularMapSRV);
 
     //Render Cube
-    ID3D11ShaderResourceView* cubeNormalMapSRV = gWallNormal->GetDiffuseSpecularMapSRV();
-    ID3D11ShaderResourceView* cube2NormalMapSRV = gTechNormal->GetDiffuseSpecularMapSRV();
+    ID3D11ShaderResourceView* cubeNormalMapSRV =  gWallTexture->GetNormalMapSRV();
+    ID3D11ShaderResourceView* cube2NormalMapSRV = gCobbleTexture->GetNormalMapSRV();
     gD3DContext->PSSetShaderResources(4, 1, &cubeNormalMapSRV);
     gD3DContext->PSSetShaderResources(5, 1, &cube2NormalMapSRV);
 

@@ -51,14 +51,14 @@ bool LoadShaders()
     gParallaxMappingVertexShader= LoadVertexShader("ParallaxMapping_vs");
     gParallaxMappingPixelShader = LoadPixelShader( "ParallaxMapping_ps");
     gNormalMappingPixelShader   = LoadPixelShader("NormalMapping_ps");
-    gSpritePixelShader               = LoadPixelShader("Sprite_ps");
+    gSpritePixelShader          = LoadPixelShader("Sprite_ps");
 
     if (gPixelLightingVertexShader  == nullptr || gPixelLightingPixelShader == nullptr  ||
         gBasicTransformVertexShader == nullptr || gLightModelPixelShader    == nullptr  || 
         gDepthOnlyPixelShader       == nullptr || gSphereVertexShader       == nullptr  || 
         gSpherePixelShader          == nullptr || gCubePixelShader          == nullptr  ||
         gParallaxMappingVertexShader== nullptr || gParallaxMappingPixelShader == nullptr||
-        gSpritePixelShader == nullptr               || gNormalMappingPixelShader == nullptr    )
+        gSpritePixelShader == nullptr          || gNormalMappingPixelShader == nullptr    )
     {
         gLastError = "Error loading shaders";
         return false;
