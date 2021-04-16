@@ -24,9 +24,10 @@ ID3D11PixelShader*  gLightModelPixelShader  = nullptr;
 ID3D11PixelShader*  gDepthOnlyPixelShader  = nullptr;
 ID3D11PixelShader*  gSpherePixelShader = nullptr;
 ID3D11PixelShader*  gCubePixelShader = nullptr;
-ID3D11VertexShader* gNormalMappingVertexShader = nullptr;
+ID3D11VertexShader* gParallaxMappingVertexShader = nullptr;
+ID3D11PixelShader*  gParallaxMappingPixelShader = nullptr;
 ID3D11PixelShader*  gNormalMappingPixelShader = nullptr;
-ID3D11PixelShader*  gWizardShader = nullptr;
+ID3D11PixelShader*  gSpritePixelShader = nullptr;
 
 
 //--------------------------------------------------------------------------------------
@@ -47,16 +48,17 @@ bool LoadShaders()
     gSpherePixelShader          = LoadPixelShader("Sphere_ps");
     gSphereVertexShader         = LoadVertexShader("Sphere_vs");
     gCubePixelShader            = LoadPixelShader("Cube_ps");
-    gNormalMappingVertexShader  = LoadVertexShader("NormalMapping_vs");
+    gParallaxMappingVertexShader= LoadVertexShader("ParallaxMapping_vs");
+    gParallaxMappingPixelShader = LoadPixelShader( "ParallaxMapping_ps");
     gNormalMappingPixelShader   = LoadPixelShader("NormalMapping_ps");
-    gWizardShader                = LoadPixelShader("Wizard_ps");
+    gSpritePixelShader               = LoadPixelShader("Sprite_ps");
 
-    if (gPixelLightingVertexShader  == nullptr || gPixelLightingPixelShader == nullptr ||
-        gBasicTransformVertexShader == nullptr || gLightModelPixelShader    == nullptr || 
-        gDepthOnlyPixelShader       == nullptr || gSphereVertexShader       == nullptr || 
-        gSpherePixelShader          == nullptr || gCubePixelShader          == nullptr ||
-        gNormalMappingVertexShader  == nullptr || gNormalMappingPixelShader == nullptr ||
-        gWizardShader == nullptr)
+    if (gPixelLightingVertexShader  == nullptr || gPixelLightingPixelShader == nullptr  ||
+        gBasicTransformVertexShader == nullptr || gLightModelPixelShader    == nullptr  || 
+        gDepthOnlyPixelShader       == nullptr || gSphereVertexShader       == nullptr  || 
+        gSpherePixelShader          == nullptr || gCubePixelShader          == nullptr  ||
+        gParallaxMappingVertexShader== nullptr || gParallaxMappingPixelShader == nullptr||
+        gSpritePixelShader == nullptr               || gNormalMappingPixelShader == nullptr    )
     {
         gLastError = "Error loading shaders";
         return false;
@@ -76,9 +78,10 @@ void ReleaseShaders()
     if (gSpherePixelShader)           gSpherePixelShader->Release();
     if (gSphereVertexShader)          gSphereVertexShader->Release();
     if (gCubePixelShader)             gCubePixelShader->Release();
-    if (gNormalMappingVertexShader)   gNormalMappingVertexShader->Release();
+    if (gParallaxMappingVertexShader) gParallaxMappingVertexShader->Release();
+    if (gParallaxMappingPixelShader)  gParallaxMappingPixelShader->Release();
+    if (gSpritePixelShader)           gSpritePixelShader->Release();
     if (gNormalMappingPixelShader)    gNormalMappingPixelShader->Release();
-    if (gWizardShader)                 gWizardShader->Release();
 }
 
 

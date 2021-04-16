@@ -23,9 +23,11 @@ extern ID3D11PixelShader*  gDepthOnlyPixelShader;
 extern ID3D11PixelShader*  gSpherePixelShader;
 extern ID3D11VertexShader* gSphereVertexShader;
 extern ID3D11PixelShader*  gCubePixelShader;
-extern ID3D11VertexShader* gNormalMappingVertexShader;
-extern ID3D11PixelShader*  gNormalMappingPixelShader;
-extern ID3D11PixelShader*  gWizardShader;
+extern ID3D11VertexShader* gParallaxMappingVertexShader;
+extern ID3D11PixelShader*  gParallaxMappingPixelShader;
+extern ID3D11PixelShader* gNormalMappingPixelShader;
+
+extern ID3D11PixelShader*  gSpritePixelShader;
 
 //--------------------------------------------------------------------------------------
 // Shader creation / destruction
