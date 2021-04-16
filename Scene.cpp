@@ -47,6 +47,8 @@ Mesh* gTeapotMesh;
 Mesh* gCubeMesh;
 Mesh* gTreeMesh;
 Mesh* gBatMesh;
+Mesh* gGlassCubeMesh;
+Mesh* gWizardMesh;
 
 Model* gFox;
 Model* gCrate;
@@ -56,6 +58,8 @@ Model* gTeapot;
 Model* gCube;
 Model* gTree;
 Model* gBat;
+Model* gGlassCube;
+Model* gWizard;
 
 const int MAX_TREES = 10;
 Model* gTrees[MAX_TREES];
@@ -130,7 +134,7 @@ ID3D11Buffer*     gPerModelConstantBuffer; // --"--
 //--------------------------------------------------------------------------------------
 // Textures
 //--------------------------------------------------------------------------------------
-const int NUM_TEXTURES = 17;
+const int NUM_TEXTURES = 19;
 // DirectX objects controlling textures used in this lab
 //ID3D11Resource*           gCharacterDiffuseSpecularMap    = nullptr; // This object represents the memory used by the texture on the GPU
 //ID3D11ShaderResourceView* gCharacterDiffuseSpecularMapSRV = nullptr; // This object is used to give shaders access to the texture above (SRV = shader resource view)
@@ -152,6 +156,8 @@ Texture* gFoxTexture = new Texture("fox.png");
 Texture* gBatTexture = new Texture("Bat.png");
 Texture* gWallTexture = new Texture("WallDiffuseSpecular.dds");
 Texture* gWallNormal = new Texture("WallNormalHeight.dds");
+Texture* gGlassTexture = new Texture("Glass.jpg");
+Texture* gWizardTexture = new Texture("wizard.jpg");
 
 float gParallaxDepth = 0.1f;
 bool gUseParallax = true;
@@ -159,7 +165,8 @@ bool gUseParallax = true;
 Texture* gTextures[NUM_TEXTURES] = { gTrollTexture, gCargoTexture, gGrassTexture, gFlareTexture,
                                         gWoodTexture, gTechTexture, gCobbleTexture, gBrainTexture,
                                             gBrainNormal, gPatternNormal, gPatternTexture, gFoxTexture,
-                                                gBatTexture, gCobbleNormal, gTechNormal, gWallTexture, gWallNormal };
+                                                gBatTexture, gCobbleNormal, gTechNormal, gWallTexture, gWallNormal, 
+                                                    gGlassTexture, gWizardTexture};
 
 //--------------------------------------------------------------------------------------
 // Light Helper Functions
@@ -199,6 +206,8 @@ bool InitGeometry()
         gCubeMesh      = new Mesh("Cube.x", true);
         gTreeMesh      = new Mesh("Tree.fbx");
         gBatMesh       = new Mesh("bat.fbx");
+        gGlassCubeMesh = new Mesh("Cube.x");    
+        gWizardMesh     = new Mesh("portal.x");
     }
     catch (std::runtime_error e)  // Constructors cannot return error messages so use exceptions to catch mesh errors (fairly standard approach this)
     {
@@ -236,7 +245,7 @@ bool InitGeometry()
         std::string TextureName = gTextures[i]->GetTextureName();
         if (!LoadTexture(TextureName, &DiffuseSpecularMap, &DiffuseSpecularMapSRV))
         {
-            gLastError = "Error creating shadow map texture";
+            gLastError = "Error creating texture";
             return false;
         }
         gTextures[i]->SetDiffuseSpecularMap(DiffuseSpecularMap);
@@ -330,6 +339,8 @@ bool InitScene()
     gSphere    = new Model(gSphereMesh);
     gTeapot    = new Model(gTeapotMesh);
     gCube      = new Model(gCubeMesh);
+    gGlassCube = new Model(gGlassCubeMesh);
+    gWizard     = new Model(gWizardMesh);
 
     //Bats
     for (int i = 0; i < MAX_BATS; i++)
@@ -357,6 +368,10 @@ bool InitScene()
     gTeapot->SetPosition({ 40, 5, 70 });
     gCube->SetPosition({ 40, 15, 10 });
     gCube->SetScale(2);
+    gGlassCube->SetPosition({ 30, 25, -110 });
+    gGlassCube->SetScale(3);
+    gWizard->SetPosition({ 80, 25, -110 });
+    //gWizard->SetScale(3);
 
     // Light set-up - using an array this time
     for (int i = 0; i < NUM_LIGHTS; ++i)
@@ -379,7 +394,7 @@ bool InitScene()
                 
     gLights[2]->SetColour(CVector3{ 1.0f, 0.8f, 0.2f });
     gLights[2]->SetStrength(15);
-    gLights[2]->GetModel()->SetPosition({ 50, 40, -110 });
+    gLights[2]->GetModel()->SetPosition({ 50, 80, -110 });
     gLights[2]->GetModel()->SetScale(pow(gLights[2]->GetStrength(), 0.7f));
 
     gLights[3]->SetColour(CVector3{ 1.0f, 0.8f, 0.2f });
@@ -431,7 +446,7 @@ void ReleaseResources()
     delete gCamera;    gCamera    = nullptr;
     delete gGround;    gGround    = nullptr;
     delete gCrate;     gCrate     = nullptr;
-    delete gFox; gFox = nullptr;
+    delete gFox;       gFox = nullptr;
     delete gSphere;    gSphere    = nullptr;
     delete gTeapot;    gTeapot    = nullptr;
     delete gCube;      gCube      = nullptr;
@@ -504,6 +519,8 @@ void RenderDepthBufferFromLight(int lightIndex)
     {
         gBats[i]->Render();
     }
+    gGlassCube->Render();
+    gWizard->Render();
 }
 
 
@@ -563,17 +580,15 @@ void RenderSceneFromCamera(Camera* camera)
         gBats[i]->Render();
     }
 
-    ID3D11ShaderResourceView* characterDiffuseSpecularMapSRV = gFoxTexture->GetDiffuseSpecularMapSRV();
-    gD3DContext->PSSetShaderResources(0, 1, &characterDiffuseSpecularMapSRV);
+    //Render Fox
+    ID3D11ShaderResourceView* foxDiffuseSpecularMapSRV = gFoxTexture->GetDiffuseSpecularMapSRV();
+    gD3DContext->PSSetShaderResources(0, 1, &foxDiffuseSpecularMapSRV);
     gFox->Render();
 
     //Render Crate
     ID3D11ShaderResourceView* crateDiffuseSpecularMapSRV = gCargoTexture->GetDiffuseSpecularMapSRV();
     gD3DContext->PSSetShaderResources(0, 1, &crateDiffuseSpecularMapSRV);
     gCrate->Render();
-
-    ID3D11ShaderResourceView* crateNormalMapSRV = gPatternNormal->GetDiffuseSpecularMapSRV();
-    gD3DContext->PSSetShaderResources(3, 1, &crateNormalMapSRV);
 
 
     //Set Normal Mapping Shaders
@@ -609,6 +624,7 @@ void RenderSceneFromCamera(Camera* camera)
     ID3D11ShaderResourceView* cube2DiffuseSpecularMapSRV = gTechTexture->GetDiffuseSpecularMapSRV();
     gD3DContext->PSSetShaderResources(0, 1, &cubeDiffuseSpecularMapSRV);
     gD3DContext->PSSetShaderResources(3, 1, &cube2DiffuseSpecularMapSRV);
+
     //Render Cube
     ID3D11ShaderResourceView* cubeNormalMapSRV = gWallNormal->GetDiffuseSpecularMapSRV();
     ID3D11ShaderResourceView* cube2NormalMapSRV = gTechNormal->GetDiffuseSpecularMapSRV();
@@ -616,6 +632,33 @@ void RenderSceneFromCamera(Camera* camera)
     gD3DContext->PSSetShaderResources(5, 1, &cube2NormalMapSRV);
 
     gCube->Render();
+
+    //Set Alpha Testing shader
+    gD3DContext->VSSetShader(gPixelLightingVertexShader, nullptr, 0);
+    gD3DContext->PSSetShader(gWizardShader, nullptr, 0);
+
+    //Render Wizard
+    ID3D11ShaderResourceView* wizardDiffuseSpecularMapSRV = gWizardTexture->GetDiffuseSpecularMapSRV();
+    gD3DContext->PSSetShaderResources(0, 1, &wizardDiffuseSpecularMapSRV);
+    gD3DContext->OMSetDepthStencilState(gUseDepthBufferState, 0);
+    gWizard->Render();
+
+    //Multiplicative Blending
+    // Select which shaders to use next
+    gD3DContext->VSSetShader(gPixelLightingVertexShader, nullptr, 0);
+    gD3DContext->PSSetShader(gPixelLightingPixelShader, nullptr, 0);
+
+    //Set blend state
+    gD3DContext->OMSetBlendState(gMultiplicativeBlending, nullptr, 0xffffff);
+
+    //Render glass cube
+    ID3D11ShaderResourceView* glassCubeDiffuseSpecularMapSRV = gGlassTexture->GetDiffuseSpecularMapSRV();
+    gD3DContext->PSSetShaderResources(0, 1, &glassCubeDiffuseSpecularMapSRV);
+    gGlassCube->Render();
+
+
+
+
 
     //// Render lights ////
 
@@ -628,7 +671,7 @@ void RenderSceneFromCamera(Camera* camera)
     gD3DContext->PSSetShaderResources(0, 1, &lightDiffuseSpecularMapSRV); // First parameter must match texture slot number in the shaer
     gD3DContext->PSSetSamplers(0, 1, &gAnisotropic4xSampler);
 
-    // States - additive blending, read-only depth buffer and no culling (standard set-up for blending
+    // States - additive blending, read-only depth buffer and no culling
     gD3DContext->OMSetBlendState(gAdditiveBlendingState, nullptr, 0xffffff);
     gD3DContext->OMSetDepthStencilState(gDepthReadOnlyState, 0);
     gD3DContext->RSSetState(gCullNoneState);
