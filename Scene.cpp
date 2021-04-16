@@ -381,7 +381,7 @@ bool InitScene()
 {
     //// Set up scene ////
 
-    gFox = new Model(gCharacterMesh);
+    gFox       = new Model(gCharacterMesh);
     gCrate     = new Model(gCrateMesh);
     gGround    = new Model(gGroundMesh);
     gSphere    = new Model(gSphereMesh);
@@ -405,7 +405,7 @@ bool InitScene()
     for (int i = 0; i < MAX_BATS; i++)
     {
         gBats[i] = new Model(gBatMesh);
-        gBats[i]->SetPosition({ -130 + 20 * sin(i * 10.0f), 20 ,150 + 20 * cos(i * 10.0f) });
+        gBats[i]->SetPosition({ -130 + 20 * sin(i * 10.0f), 24 ,150 + 20 * cos(i * 10.0f) });
         gBats[i]->SetScale(0.1);
     }
     //Trees
@@ -433,9 +433,9 @@ bool InitScene()
     gTank->SetPosition({ 80, 5, -110 });
     gTank->SetScale(0.05);
     gTank->SetRotation({ 0.0f, ToRadians(-180.0f), 0.0f });
-    gHat->SetPosition(gFox->Position() + CVector3{5, 17.4f, 6.2f });
+    gHat->SetPosition(gFox->Position() + CVector3{5, 17.5f, 6.2f });
     gHat->SetRotation({ ToRadians(-6.0f), 0.0f , ToRadians(10.0f) });
-    gHat->SetScale(10);
+    gHat->SetScale(11);
     gCat->SetPosition({ -130, 2, 145 });
     gCat->SetRotation({ 0.0f, ToRadians(-100.0f), 0.0f });
     gCat->SetScale(0.013);
@@ -446,16 +446,20 @@ bool InitScene()
     gTrunk->SetPosition({-140,2,180});
     gLeaves->SetPosition(gTrunk->Position() + CVector3{ 0, 30.0f, 0 });
     gLeaves->SetRotation({ 0,ToRadians(180) ,0 });
-    gGriffin->SetPosition({0,2,0});
-    gGriffin->SetScale(0.05);
-    gTower->SetPosition({0,50,0});
-    gTower->SetScale(0.01);
-    gWizard->SetScale(0.05);
-    gWizard->SetPosition({0,80,0});
-    gBox->SetScale(0.05);
-    gBox->SetPosition({ 0,100,0 });
-    gWell->SetScale(0.05);
-    gWell->SetPosition({ 0,120,0 });
+    gGriffin->SetPosition({-150,80,100});
+    gGriffin->SetRotation({ 0,ToRadians(240) ,0 });
+    gGriffin->SetScale(0.1);
+    gTower->SetPosition({ -117.0f,22.0f,30.6f });
+    gTower->SetRotation({ ToRadians(-5.0f), ToRadians(-200.0f), 0.0F });
+    gTower->SetScale(0.1);
+    gWizard->SetScale(0.1);
+    gWizard->SetPosition({ -143.1f,7.0f,96.5f });
+    gWizard->SetRotation({ 0.0f, ToRadians(-140.0f), 0.0F });
+    gBox->SetScale(0.1);
+    gBox->SetPosition({ -93,28,-2 });
+    gBox->SetRotation({ 0,ToRadians(180),0 });
+    gWell->SetScale(0.1);
+    gWell->SetPosition({ -58.1f ,4.6f,180.7f });
     
 
     // Light set-up - using an array this time
@@ -478,13 +482,13 @@ bool InitScene()
 	gLights[1]->GetModel()->FaceTarget({ gTeapot->Position() });
                 
     gLights[2]->SetColour(CVector3{ 1.0f, 0.8f, 0.2f });
-    gLights[2]->SetStrength(20);
+    gLights[2]->SetStrength(25);
     gLights[2]->GetModel()->SetPosition({ 50, 80, -110 });
     gLights[2]->GetModel()->SetScale(pow(gLights[2]->GetStrength(), 0.7f));
 
     gLights[3]->SetColour(CVector3{ 1.0f, 0.8f, 0.2f });
-    gLights[3]->SetStrength(20);
-    gLights[3]->GetModel()->SetPosition({ -120, 60, 150 });
+    gLights[3]->SetStrength(25);
+    gLights[3]->GetModel()->SetPosition({ -120, 120, 130 });
     gLights[3]->GetModel()->SetScale(pow(gLights[3]->GetStrength(), 0.7f));
 
     //// Set up camera ////
@@ -1110,7 +1114,10 @@ void UpdateScene(float frameTime)
         frameTimeMs.precision(2);
         frameTimeMs << std::fixed << avgFrameTime * 1000;
         std::string windowTitle = "CO2409 Week 20: Shadow Mapping - Frame Time: " + frameTimeMs.str() +
-                                  "ms, FPS: " + std::to_string(static_cast<int>(1 / avgFrameTime + 0.5f));
+                                  "ms, FPS: " + std::to_string(static_cast<int>(1 / avgFrameTime + 0.5f)) + ", XPos: " + std::to_string(gCamera->Position().x) +
+                                   ", YPos: " + std::to_string(gCamera->Position().y) + ", ZPos: " + std::to_string(gCamera->Position().z) + 
+                                   ", XRot: "+ std::to_string(ToDegrees(gCamera->Rotation().x)) + ", YRot: " + std::to_string(ToDegrees(gCamera->Rotation().y)) +
+                                   ", ZRot: " + std::to_string(ToDegrees(gCamera->Rotation().z));
         SetWindowTextA(gHWnd, windowTitle.c_str());
         totalFrameTime = 0;
         frameCount = 0;
