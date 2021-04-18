@@ -65,13 +65,15 @@ Mesh* gGriffinMesh;
 Mesh* gWizardMesh;
 Mesh* gBoxMesh;
 Mesh* gWellMesh;
+Mesh* gCrystalMesh;
 
 //Array to hold all meshes. This allows for easy deletion.
-const int NUM_MESHES = 22;
+const int NUM_MESHES = 24;
 Mesh* gMeshes[NUM_MESHES] = { gFoxMesh, gCrateMesh, gGroundMesh, gSphereMesh, gLightMesh,
                               gTeapotMesh, gCubeMesh, gTreeMesh, gBatMesh, gGlassCubeMesh,
                               gSpriteMesh, gTankMesh, gHatMesh, gPotionMesh, gCatMesh, gTrunkMesh,
-                              gLeavesMesh, gTowerMesh , gGriffinMesh, gWizardMesh, gBoxMesh, gWellMesh };
+                              gLeavesMesh, gTowerMesh , gGriffinMesh, gWizardMesh, gBoxMesh, gWellMesh,
+                              gCrystalMesh};
 
 Model* gFox;
 Model* gCrate;
@@ -94,13 +96,16 @@ Model* gWizard;
 Model* gBox;
 Model* gWell;
 Model* gPortal;
+Model* gCrystal;
+Model* gCellCrystal;
 
 //Array to hold all models, this allows for easy deletion
-const int NUM_MODELS = 21;
-Model* gModels[NUM_MODELS] = { gFox, gCrate, gGround, gSphere,
-                              gTeapot, gCube, gBat, gGlassCube,
-                              gSprite, gTank, gHat, gPotion, gCat, gTrunk,
-                              gLeaves, gTower , gGriffin, gWizard, gBox, gWell, gPortal };
+const int NUM_MODELS = 23;
+Model* gModels[NUM_MODELS] = {gFox,    gCrate, gGround, gSphere,
+                              gTeapot, gCube,  gBat, gGlassCube,
+                              gSprite, gTank,  gHat, gPotion, gCat, gTrunk,
+                              gLeaves, gTower, gGriffin, gWizard, gBox, gWell, 
+                              gPortal, gCrystal, gCellCrystal };
 
 //Array to hold trees. This allows for easy placement in the scene setup
 const int NUM_TREES = 10;
@@ -124,6 +129,10 @@ float    gSpecularPower = 4096; // Specular power controls shininess - same for 
 
 ColourRGBA gBackgroundColor = { 0.2f, 0.2f, 0.3f, 1.0f };
 
+// Cell shading data
+CVector3 OutlineColour = { 0.0f, 0.0f, 0.0f };
+float    OutlineThickness = 0.015f;
+
 // Variables controlling light1's orbiting of the cube
 const float gLightOrbit = 30.0f;
 const float gLightOrbitSpeed = 0.7f;
@@ -139,8 +148,8 @@ bool lockFPS = true;
 // This texture will have the scene renderered on it. Then the texture is applied to a model
 
 // Dimensions of portal texture - controls quality of rendered scene in portal
-int gPortalWidth = 512;
-int gPortalHeight = 512;
+int gPortalWidth = 1024;
+int gPortalHeight = 1024;
 
 // The portal texture - each frame it is rendered to, then it is used as a texture for model
 ID3D11Texture2D* gPortalTexture = nullptr; // This object represents the memory used by the texture on the GPU
@@ -191,7 +200,6 @@ ID3D11Buffer*     gPerModelConstantBuffer; // --"--
 //--------------------------------------------------------------------------------------
 // Textures
 //--------------------------------------------------------------------------------------
-const int NUM_TEXTURES = 25;
 
 //Create texture objects, constructor can take up to two parameters, DiffuseSpecularMap name and NormalMap name.
 Texture* gTrollTexture = new Texture("TrollDiffuseSpecular.dds");
@@ -219,6 +227,12 @@ Texture* gGriffinTexture = new Texture("griffin.png");
 Texture* gTowerTexture = new Texture("wizardTowerDiff.png");
 Texture* gWizardTexture = new Texture("wizardDiff.png");
 Texture* gTVTexture = new Texture("tv.png");
+Texture* gCellMap = new Texture("CellGradient.png");
+Texture* gCrystalTexture = new Texture("crystal.png");
+Texture* gCellCrystalTexture = new Texture("purple.png");
+Texture* gTreeTexture = new Texture("LightGreen.png");
+
+const int NUM_TEXTURES = 29;
 
 //Array to hold all textures. This allows for the loading of all textures and easy deletion.
 Texture* gTextures[NUM_TEXTURES] = { gTrollTexture, gCargoTexture, gGrassTexture, gFlareTexture,
@@ -227,8 +241,7 @@ Texture* gTextures[NUM_TEXTURES] = { gTrollTexture, gCargoTexture, gGrassTexture
                                      gGlassTexture, gSpriteTexture, gMetalTexture, gHatTexture,
                                      gPotionTexture, gTankTexture, gCatTexture , gTrunkTexture, 
                                      gLeavesTexture, gGriffinTexture, gTowerTexture, gWizardTexture,
-                                     gTVTexture                                                     };
-
+                                     gTVTexture, gCellMap, gCrystalTexture, gCellCrystalTexture, gTreeTexture     };
 
 //Parallax variables
 float gParallaxDepth = 0.1f;
@@ -284,6 +297,7 @@ bool InitGeometry()
         gWizardMesh    = new Mesh("wizard.fbx");
         gBoxMesh       = new Mesh("box.fbx");
         gWellMesh      = new Mesh("well.fbx");
+        gCrystalMesh   = new Mesh("crystal.fbx");
 
     }
     catch (std::runtime_error e)  // Constructors cannot return error messages so use exceptions to catch mesh errors
@@ -354,8 +368,8 @@ bool InitGeometry()
 
     //**** Create Portal Texture ****//
 
- // Using a helper function to load textures from files above. Here we create the portal texture manually
- // as we are creating a special kind of texture (one that we can render to). Many settings to prepare:
+    // Using a helper function to load textures from files above. Here we create the portal texture manually
+    // as we are creating a special kind of texture (one that we can render to). Many settings to prepare:
     D3D11_TEXTURE2D_DESC portalDesc = {};
     portalDesc.Width = gPortalWidth;  // Size of the portal texture determines its quality
     portalDesc.Height = gPortalHeight;
@@ -529,6 +543,8 @@ bool InitScene()
     gBox       = new Model(gBoxMesh);
     gWell      = new Model(gWellMesh);
     gPortal    = new Model(gSpriteMesh);
+    gCrystal   = new Model(gCrystalMesh);
+    gCellCrystal = new Model(gCrystalMesh);
 
     //Bats
     for (int i = 0; i < NUM_BATS; i++)
@@ -591,6 +607,12 @@ bool InitScene()
     gWell->SetScale(0.1);
     gWell->SetPosition({ -58.1f ,4.6f,180.7f });
     gPortal->SetPosition({ 80, 60, -140 });
+    gCrystal->SetPosition({ -42, 4.5f, 88 });
+    gCrystal->SetScale(0.2);
+    gCrystal->SetRotation({ 0,ToRadians(180),0 });
+    gCellCrystal->SetPosition({ -106, -1, 187 });
+    gCellCrystal->SetRotation({0,ToRadians(0),0});
+    gCellCrystal->SetScale(0.2);
 
     // Light set-up
     for (int i = 0; i < NUM_LIGHTS; ++i)
@@ -629,8 +651,8 @@ bool InitScene()
 
     //Set up portal camera
     gPortalCamera = new Camera();
-    gPortalCamera->SetPosition({ -110, 12, 185 });
-    gPortalCamera->SetRotation({ ToRadians(-10), ToRadians(210), 0 });
+    gPortalCamera->SetPosition({ -115, 12, 185 });
+    gPortalCamera->SetRotation({ ToRadians(-10), ToRadians(200), 0 });
 
     return true;
 }
@@ -763,6 +785,8 @@ void RenderDepthBufferFromLight(int lightIndex)
     gBox->Render();
     gWell->Render();
     gPortal->Render();
+    gCrystal->Render();
+    gCellCrystal->Render();
 }
 
 
@@ -782,7 +806,6 @@ void RenderSceneFromCamera(Camera* camera)
     gD3DContext->VSSetConstantBuffers(0, 1, &gPerFrameConstantBuffer); // First parameter must match constant buffer number in the shader 
     gD3DContext->PSSetConstantBuffers(0, 1, &gPerFrameConstantBuffer);
 
-
     //// Render lit models ////
 
     // Select which shaders to use next
@@ -794,7 +817,6 @@ void RenderSceneFromCamera(Camera* camera)
     gD3DContext->OMSetDepthStencilState(gUseDepthBufferState, 0);
     gD3DContext->RSSetState(gCullBackState);
 
-
     // Select the approriate textures and sampler to use in the pixel shader
     ID3D11ShaderResourceView* grassDiffuseSpecularMapSRV = gGrassTexture->GetDiffuseSpecularMapSRV();
     gD3DContext->PSSetShaderResources(0, 1, &grassDiffuseSpecularMapSRV); // First parameter must match texture slot number in the shader
@@ -804,15 +826,10 @@ void RenderSceneFromCamera(Camera* camera)
     // the Mesh render function, which will set up vertex & index buffer before finally calling Draw on the GPU
     gGround->Render();
 
-    // Render other lit models, only change textures for each onee
-        //Render trees
-    ID3D11ShaderResourceView* treeDiffuseSpecularMapSRV = gGrassTexture->GetDiffuseSpecularMapSRV();
-    gD3DContext->PSSetShaderResources(0, 1, &treeDiffuseSpecularMapSRV);
+    // Render other lit models
+    
 
-    for (int i = 0; i < NUM_TREES; i++)
-    {
-        gTrees[i]->Render();
-    }
+
     //Render bats;
     ID3D11ShaderResourceView* batDiffuseSpecularMapSRV = gBatTexture->GetDiffuseSpecularMapSRV();
     gD3DContext->PSSetShaderResources(0, 1, &batDiffuseSpecularMapSRV);
@@ -877,6 +894,10 @@ void RenderSceneFromCamera(Camera* camera)
     gD3DContext->PSSetShaderResources(0, 1, &wellDiffuseSpecularMapSRV);
     gWell->Render();
 
+    ID3D11ShaderResourceView* crystalDiffuseSpecularMapSRV = gCrystalTexture->GetDiffuseSpecularMapSRV();
+    gD3DContext->PSSetShaderResources(0, 1, &crystalDiffuseSpecularMapSRV);
+    gCrystal->Render();
+
     //Set Portal Shader
     gD3DContext->PSSetShader(gTVPixelShader, nullptr, 0);
 
@@ -934,7 +955,6 @@ void RenderSceneFromCamera(Camera* camera)
     gD3DContext->PSSetShaderResources(0, 1, &cubeDiffuseSpecularMapSRV);
     gD3DContext->PSSetShaderResources(3, 1, &cube2DiffuseSpecularMapSRV);
 
-    //Render Cube
     ID3D11ShaderResourceView* cubeNormalMapSRV =  gWallTexture->GetNormalMapSRV();
     ID3D11ShaderResourceView* cube2NormalMapSRV = gCobbleTexture->GetNormalMapSRV();
     gD3DContext->PSSetShaderResources(4, 1, &cubeNormalMapSRV);
@@ -946,8 +966,7 @@ void RenderSceneFromCamera(Camera* camera)
     gD3DContext->VSSetShader(gPixelLightingVertexShader, nullptr, 0);
     gD3DContext->PSSetShader(gSpritePixelShader, nullptr, 0);
    
-
-    //Render Wizard
+    //Render Sprite
     ID3D11ShaderResourceView* spriteDiffuseSpecularMapSRV = gSpriteTexture->GetDiffuseSpecularMapSRV();
     gD3DContext->PSSetShaderResources(0, 1, &spriteDiffuseSpecularMapSRV);
     gD3DContext->OMSetDepthStencilState(gUseDepthBufferState, 0);
@@ -970,6 +989,51 @@ void RenderSceneFromCamera(Camera* camera)
     ID3D11ShaderResourceView* glassCubeDiffuseSpecularMapSRV = gGlassTexture->GetDiffuseSpecularMapSRV();
     gD3DContext->PSSetShaderResources(0, 1, &glassCubeDiffuseSpecularMapSRV);
     gGlassCube->Render();
+
+    //Set Cell Shading Outline Shader
+    gD3DContext->VSSetShader(gCellShadingOutlineVertexShader, nullptr, 0);
+    gD3DContext->PSSetShader(gCellShadingOutlinePixelShader, nullptr, 0);
+
+    // States - no blending, normal depth buffer. However, use front culling to draw *inside* of model
+    gD3DContext->OMSetBlendState(gNoBlendingState, nullptr, 0xffffff);
+    gD3DContext->OMSetDepthStencilState(gUseDepthBufferState, 0);
+    gD3DContext->RSSetState(gCullFrontState);
+
+    //Render cell shaded crystal: 1st pass (Inside out, slightly bigger and black)
+    gCellCrystal->Render();
+    //Render cell shaded trees: 1st pass
+    for (int i = 0; i < NUM_TREES; i++)
+    {
+        gTrees[i]->Render();
+    }
+
+    // Main cell shading shaders
+    gD3DContext->VSSetShader(gCellShadingVertexShader, nullptr, 0);
+    gD3DContext->PSSetShader(gCellShadingPixelShader, nullptr, 0);
+
+    // Switch back to the usual back face culling (not inside out)
+    gD3DContext->RSSetState(gCullBackState);
+
+    //Render cell shaded crystal: 2nd pass(normal sized with cell shading)
+    ID3D11ShaderResourceView* cellCrystalDiffuseSpecularMapSRV = gCellCrystalTexture->GetDiffuseSpecularMapSRV();
+    gD3DContext->PSSetShaderResources(0, 1, &cellCrystalDiffuseSpecularMapSRV); // First parameter must match texture slot number in the shaer
+    gD3DContext->PSSetSamplers(0, 1, &gAnisotropic4xSampler);
+
+    //cell shading uses a special 1D "cell map", which uses point sampling
+    ID3D11ShaderResourceView* cellMapDiffuseSpecularMapSRV = gCellMap->GetDiffuseSpecularMapSRV();
+    gD3DContext->PSSetShaderResources(3, 1, &cellMapDiffuseSpecularMapSRV); // First parameter must match texture slot number in the shaer
+    gD3DContext->PSSetSamplers(2, 1, &gPointSampler);
+
+    gCellCrystal->Render();
+
+    //Render trees
+    ID3D11ShaderResourceView* treeDiffuseSpecularMapSRV = gTreeTexture->GetDiffuseSpecularMapSRV();
+    gD3DContext->PSSetShaderResources(0, 1, &treeDiffuseSpecularMapSRV);
+
+    for (int i = 0; i < NUM_TREES; i++)
+    {
+        gTrees[i]->Render();
+    }
 
     //// Render lights ////
 
@@ -1023,14 +1087,15 @@ void RenderScene()
     gPerFrameConstants.light3Colour =           gLights[2]->GetColour() * gLights[2]->GetStrength();
     gPerFrameConstants.light3Position =         gLights[2]->GetModel()->Position();
 
-    gPerFrameConstants.light4Colour = gLights[3]->GetColour() * gLights[3]->GetStrength();
-    gPerFrameConstants.light4Position = gLights[3]->GetModel()->Position();
+    gPerFrameConstants.light4Colour =           gLights[3]->GetColour() * gLights[3]->GetStrength();
+    gPerFrameConstants.light4Position =         gLights[3]->GetModel()->Position();
 
-    gPerFrameConstants.ambientColour  = gAmbientColour;
-    gPerFrameConstants.specularPower  = gSpecularPower;
-    gPerFrameConstants.cameraPosition = gCamera->Position();
-    gPerFrameConstants.parallaxDepth = (gUseParallax ? gParallaxDepth : 0);
-
+    gPerFrameConstants.ambientColour  =         gAmbientColour;
+    gPerFrameConstants.specularPower  =         gSpecularPower;
+    gPerFrameConstants.cameraPosition =         gCamera->Position();
+    gPerFrameConstants.parallaxDepth =          (gUseParallax ? gParallaxDepth : 0);
+    gPerFrameConstants.outlineColour =          OutlineColour;
+    gPerFrameConstants.outlineThickness =       OutlineThickness;
 
     //***************************************//
     //// Render from light's point of view ////

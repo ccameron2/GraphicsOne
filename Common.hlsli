@@ -24,6 +24,11 @@ struct TangentVertex
     float2 uv       : uv;
 };
 
+struct BasicPixelShaderInput
+{
+    float4 projectedPosition : SV_Position;
+};
+
 // This structure describes what data the lighting pixel shader receives from the vertex shader.
 // The projected position is a required output from all vertex shaders - where the vertex is on the screen
 // The world position and normal at the vertex are sent to the pixel shader for the lighting equations.
@@ -111,6 +116,9 @@ cbuffer PerFrameConstants : register(b0) // The b0 gives this constant buffer th
 
     float3   gCameraPosition;
     float    gParallaxDepth;
+
+    float3   gOutlineColour;    // Cell shading outline colour
+    float    gOutlineThickness; // Controls thickness of outlines for cell shading
 
     float    wiggle;
 }

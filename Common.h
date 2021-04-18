@@ -97,6 +97,9 @@ struct PerFrameConstants
     CVector3   cameraPosition;
     float      parallaxDepth;
 
+    CVector3   outlineColour;    // Cell shading outline colour
+    float      outlineThickness; // Controls thickness of outlines for cell shading
+
     float      wiggle = 0;
 };
 
