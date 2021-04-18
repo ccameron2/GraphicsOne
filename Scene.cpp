@@ -11,12 +11,15 @@
 #include "Shader.h"
 #include "Input.h"
 #include "Common.h"
+
+//New classes
 #include "Light.h"
 #include "Texture.h"
 
 #include "CVector2.h" 
 #include "CVector3.h" 
 #include "CMatrix4x4.h"
+
 #include "MathHelpers.h"     // Helper functions for maths
 #include "GraphicsHelpers.h" // Helper functions to unclutter the code here
 
@@ -31,6 +34,8 @@
 //--------------------------------------------------------------------------------------
 // Addition of Mesh, Model and Camera classes have greatly simplified this section
 // Geometry data has gone to Mesh class. Positions, rotations, matrices have gone to Model and Camera classes
+// Light and Texture classes have also been added. Textures contain both the diffuse and normal maps for the texture.
+// Lights contain a colour, strength value and model.
 
 // Constants controlling speed of movement/rotation (measured in units per second because we're using frame time)
 const float ROTATION_SPEED = 2.0f;  // 2 radians per second for rotation
@@ -61,8 +66,9 @@ Mesh* gWizardMesh;
 Mesh* gBoxMesh;
 Mesh* gWellMesh;
 
-const int MAX_MESHES = 22;
-Mesh* gMeshes[MAX_MESHES] = { gFoxMesh, gCrateMesh, gGroundMesh, gSphereMesh, gLightMesh,
+//Array to hold all meshes. This allows for easy deletion.
+const int NUM_MESHES = 22;
+Mesh* gMeshes[NUM_MESHES] = { gFoxMesh, gCrateMesh, gGroundMesh, gSphereMesh, gLightMesh,
                               gTeapotMesh, gCubeMesh, gTreeMesh, gBatMesh, gGlassCubeMesh,
                               gSpriteMesh, gTankMesh, gHatMesh, gPotionMesh, gCatMesh, gTrunkMesh,
                               gLeavesMesh, gTowerMesh , gGriffinMesh, gWizardMesh, gBoxMesh, gWellMesh };
@@ -87,21 +93,25 @@ Model* gGriffin;
 Model* gWizard;
 Model* gBox;
 Model* gWell;
+Model* gPortal;
 
-const int NUM_MODELS = 20;
+//Array to hold all models, this allows for easy deletion
+const int NUM_MODELS = 21;
 Model* gModels[NUM_MODELS] = { gFox, gCrate, gGround, gSphere,
                               gTeapot, gCube, gBat, gGlassCube,
                               gSprite, gTank, gHat, gPotion, gCat, gTrunk,
-                              gLeaves, gTower , gGriffin, gWizard, gBox, gWell };
+                              gLeaves, gTower , gGriffin, gWizard, gBox, gWell, gPortal };
 
+//Array to hold trees. This allows for easy placement in the scene setup
 const int NUM_TREES = 10;
 Model* gTrees[NUM_TREES];
 
+//Array to hold bats for easy scene setup placement
 const int NUM_BATS = 10;
 Model* gBats[NUM_BATS];
 
 Camera* gCamera;
-
+Camera* gPortalCamera;
 
 // Store lights in an array
 const int NUM_LIGHTS = 4;
@@ -118,30 +128,47 @@ ColourRGBA gBackgroundColor = { 0.2f, 0.2f, 0.3f, 1.0f };
 const float gLightOrbit = 30.0f;
 const float gLightOrbitSpeed = 0.7f;
 
-// Spotlight data - using spotlights in this lab because shadow mapping needs to treat each light as a camera, which is easy with spotlights
-float gSpotlightConeAngle = 90.0f; // Spot light cone angle (degrees), like the FOV (field-of-view) of the spot light
+float gSpotlightConeAngle = 90.0f; // Spot light cone angle (degrees)
 
 // Lock FPS to monitor refresh rate, for me this is 165. Press 'p' to toggle to full fps
 bool lockFPS = true;
 
+//--------------------------------------------------------------------------------------
+//**** Portal Texture  ****//
+//--------------------------------------------------------------------------------------
+// This texture will have the scene renderered on it. Then the texture is applied to a model
+
+// Dimensions of portal texture - controls quality of rendered scene in portal
+int gPortalWidth = 512;
+int gPortalHeight = 512;
+
+// The portal texture - each frame it is rendered to, then it is used as a texture for model
+ID3D11Texture2D* gPortalTexture = nullptr; // This object represents the memory used by the texture on the GPU
+ID3D11RenderTargetView* gPortalRenderTarget = nullptr; // This object is used when we want to render to the texture above
+ID3D11ShaderResourceView* gPortalTextureSRV = nullptr; // This object is used to give shaders access to the texture above (SRV = shader resource view)
+
+// Also need a depth/stencil buffer for the portal - it's just another kind of texture
+// NOTE: ***Can share this depth buffer between multiple portals of the same size***
+ID3D11Texture2D* gPortalDepthStencil = nullptr; // This object represents the memory used by the texture on the GPU
+ID3D11DepthStencilView* gPortalDepthStencilView = nullptr; // This object is used when we want to use the texture above as the depth buffer
 
 //--------------------------------------------------------------------------------------
 //**** Shadow Texture  ****//
 //--------------------------------------------------------------------------------------
 // This texture will have the scene from the point of view of the light renderered on it. This texture is then used for shadow mapping
 
-// Dimensions of shadow map texture - controls quality of shadows
+// Dimensions of shadow map textures - controls quality of shadows
 int gShadowMapSize  = 1024;
 
-// The shadow texture - effectively a depth buffer of the scene **from the light's point of view**
-//                      Each frame it is rendered to, then the texture is used to help the per-pixel lighting shader identify pixels in shadow
+// The shadow textures - effectively a depth buffer of the scene **from the light's point of view**
+//                       Each frame it is rendered to, then the texture is used to help the per-pixel lighting shader identify pixels in shadow
 ID3D11Texture2D*          gShadowMap1Texture      = nullptr; // This object represents the memory used by the texture on the GPU
 ID3D11DepthStencilView*   gShadowMap1DepthStencil = nullptr; // This object is used when we want to render to the texture above **as a depth buffer**
 ID3D11ShaderResourceView* gShadowMap1SRV          = nullptr; // This object is used to give shaders access to the texture above (SRV = shader resource view)
 
-ID3D11Texture2D*          gShadowMap2Texture = nullptr;
+ID3D11Texture2D*          gShadowMap2Texture      = nullptr;
 ID3D11DepthStencilView*   gShadowMap2DepthStencil = nullptr;
-ID3D11ShaderResourceView* gShadowMap2SRV = nullptr;
+ID3D11ShaderResourceView* gShadowMap2SRV          = nullptr;
 
 
 //*********************//
@@ -152,9 +179,6 @@ ID3D11ShaderResourceView* gShadowMap2SRV = nullptr;
 // Constant Buffers
 //--------------------------------------------------------------------------------------
 // Variables sent over to the GPU each frame
-// The structures are now in Common.h
-// IMPORTANT: Any new data you add in C++ code (CPU-side) is not automatically available to the GPU
-//            Anything the shaders need (per-frame or per-model) needs to be sent via a constant buffer
 
 PerFrameConstants gPerFrameConstants;      // The constants that need to be sent to the GPU each frame (see common.h for structure)
 ID3D11Buffer*     gPerFrameConstantBuffer; // The GPU buffer that will recieve the constants above
@@ -167,10 +191,9 @@ ID3D11Buffer*     gPerModelConstantBuffer; // --"--
 //--------------------------------------------------------------------------------------
 // Textures
 //--------------------------------------------------------------------------------------
-const int NUM_TEXTURES = 24;
-// DirectX objects controlling textures used in this lab
-//ID3D11Resource*           gCharacterDiffuseSpecularMap    = nullptr; // This object represents the memory used by the texture on the GPU
-//ID3D11ShaderResourceView* gCharacterDiffuseSpecularMapSRV = nullptr; // This object is used to give shaders access to the texture above (SRV = shader resource view)
+const int NUM_TEXTURES = 25;
+
+//Create texture objects, constructor can take up to two parameters, DiffuseSpecularMap name and NormalMap name.
 Texture* gTrollTexture = new Texture("TrollDiffuseSpecular.dds");
 Texture* gCargoTexture = new Texture("CargoA.dds");
 Texture* gGrassTexture = new Texture("GrassDiffuseSpecular.dds");
@@ -195,16 +218,21 @@ Texture* gLeavesTexture = new Texture("Leaves.png");
 Texture* gGriffinTexture = new Texture("griffin.png");
 Texture* gTowerTexture = new Texture("wizardTowerDiff.png");
 Texture* gWizardTexture = new Texture("wizardDiff.png");
+Texture* gTVTexture = new Texture("tv.png");
 
-float gParallaxDepth = 0.1f;
-bool gUseParallax = true;
-
+//Array to hold all textures. This allows for the loading of all textures and easy deletion.
 Texture* gTextures[NUM_TEXTURES] = { gTrollTexture, gCargoTexture, gGrassTexture, gFlareTexture,
                                      gWoodTexture, gTechTexture, gCobbleTexture, gBrainTexture,
                                      gPatternTexture, gFoxTexture, gBatTexture, gWallTexture, 
                                      gGlassTexture, gSpriteTexture, gMetalTexture, gHatTexture,
                                      gPotionTexture, gTankTexture, gCatTexture , gTrunkTexture, 
-                                     gLeavesTexture, gGriffinTexture, gTowerTexture, gWizardTexture };
+                                     gLeavesTexture, gGriffinTexture, gTowerTexture, gWizardTexture,
+                                     gTVTexture                                                     };
+
+
+//Parallax variables
+float gParallaxDepth = 0.1f;
+bool gUseParallax = true;
 
 //--------------------------------------------------------------------------------------
 // Light Helper Functions
@@ -232,10 +260,9 @@ CMatrix4x4 CalculateLightProjectionMatrix(int lightIndex)
 bool InitGeometry()
 {
     // Load mesh geometry data, just like TL-Engine this doesn't create anything in the scene. Create a Model for that.
-    // IMPORTANT NOTE: Will only keep the first object from the mesh - multipart objects will have parts missing - see later lab for more robust loader
     try 
     {
-        gFoxMesh = new Mesh("Fox.fbx");
+        gFoxMesh       = new Mesh("Fox.fbx");
         gCrateMesh     = new Mesh("CargoContainer.x");
         gGroundMesh    = new Mesh("Hills.x");
         gSphereMesh    = new Mesh("Sphere.x", true);
@@ -259,12 +286,15 @@ bool InitGeometry()
         gWellMesh      = new Mesh("well.fbx");
 
     }
-    catch (std::runtime_error e)  // Constructors cannot return error messages so use exceptions to catch mesh errors (fairly standard approach this)
+    catch (std::runtime_error e)  // Constructors cannot return error messages so use exceptions to catch mesh errors
     {
         gLastError = e.what(); // This picks up the error message put in the exception (see Mesh.cpp)
         return false;
     }
+
+    //Create light objects
     CreateLights();
+    
     // Load the shaders required for the geometry we will use (see Shader.cpp / .h)
     if (!LoadShaders())
     {
@@ -290,17 +320,23 @@ bool InitGeometry()
     // Load textures and create DirectX objects for them
     for (int i = 0; i < NUM_TEXTURES; i++)
     {
+        //Variables to hold diffuse maps
         ID3D11Resource* DiffuseSpecularMap = nullptr;
         ID3D11ShaderResourceView* DiffuseSpecularMapSRV = nullptr;
         std::string TextureName = gTextures[i]->GetTextureName();
+
+        //Variables to hold normal maps
         ID3D11Resource* NormalMap = nullptr;
         ID3D11ShaderResourceView* NormalMapSRV = nullptr;
         std::string NormalName = gTextures[i]->GetNormalName();
+
+        //Load the diffuse map textures
         if (!LoadTexture(TextureName, &DiffuseSpecularMap, &DiffuseSpecularMapSRV))
         {
             gLastError = "Error creating texture";
             return false;
         }
+        //Load the normal map textures if there is a provided name for the file.
         if (NormalName != "")
         {
             if (!LoadTexture(NormalName, &NormalMap, &NormalMapSRV))
@@ -309,15 +345,92 @@ bool InitGeometry()
                 return false;
             }
         }
+        //Set textures
         gTextures[i]->SetDiffuseSpecularMap(DiffuseSpecularMap);
         gTextures[i]->SetDiffuseSpecularMapSRV(DiffuseSpecularMapSRV);
         gTextures[i]->SetNormalMap(NormalMap);
         gTextures[i]->SetNormalMapSRV(NormalMapSRV);
     }
 
-	//**** Create Shadow Map texture ****//
+    //**** Create Portal Texture ****//
 
-	// We also need a depth buffer to go with our portal
+ // Using a helper function to load textures from files above. Here we create the portal texture manually
+ // as we are creating a special kind of texture (one that we can render to). Many settings to prepare:
+    D3D11_TEXTURE2D_DESC portalDesc = {};
+    portalDesc.Width = gPortalWidth;  // Size of the portal texture determines its quality
+    portalDesc.Height = gPortalHeight;
+    portalDesc.MipLevels = 1; // No mip-maps when rendering to textures (or we would have to render every level)
+    portalDesc.ArraySize = 1;
+    portalDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; // RGBA texture (8-bits each)
+    portalDesc.SampleDesc.Count = 1;
+    portalDesc.SampleDesc.Quality = 0;
+    portalDesc.Usage = D3D11_USAGE_DEFAULT;
+    portalDesc.BindFlags = D3D10_BIND_RENDER_TARGET | D3D10_BIND_SHADER_RESOURCE; // IMPORTANT: Indicate we will use texture as render target, and pass it to shaders
+    portalDesc.CPUAccessFlags = 0;
+    portalDesc.MiscFlags = 0;
+    if (FAILED(gD3DDevice->CreateTexture2D(&portalDesc, NULL, &gPortalTexture)))
+    {
+        gLastError = "Error creating portal texture";
+        return false;
+    }
+
+    // We created the portal texture above, now we get a "view" of it as a render target, i.e. get a special pointer to the texture that
+    // we use when rendering to it (see RenderScene function below)
+    if (FAILED(gD3DDevice->CreateRenderTargetView(gPortalTexture, NULL, &gPortalRenderTarget)))
+    {
+        gLastError = "Error creating portal render target view";
+        return false;
+    }
+
+    // We also need to send this texture (resource) to the shaders. To do that we must create a shader-resource "view"
+    D3D11_SHADER_RESOURCE_VIEW_DESC srDesc = {};
+    srDesc.Format = portalDesc.Format;
+    srDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    srDesc.Texture2D.MostDetailedMip = 0;
+    srDesc.Texture2D.MipLevels = 1;
+    if (FAILED(gD3DDevice->CreateShaderResourceView(gPortalTexture, &srDesc, &gPortalTextureSRV)))
+    {
+        gLastError = "Error creating portal shader resource view";
+        return false;
+    }
+    //**** Create Portal Depth Buffer ****//
+
+// We also need a depth buffer to go with our portal
+//**** This depth buffer can be shared with any other portals of the same size
+    portalDesc = {};
+    portalDesc.Width = gPortalWidth;
+    portalDesc.Height = gPortalHeight;
+    portalDesc.MipLevels = 1;
+    portalDesc.ArraySize = 1;
+    portalDesc.Format = DXGI_FORMAT_D32_FLOAT; // Depth buffers contain a single float per pixel
+    portalDesc.SampleDesc.Count = 1;
+    portalDesc.SampleDesc.Quality = 0;
+    portalDesc.Usage = D3D11_USAGE_DEFAULT;
+    portalDesc.BindFlags = D3D10_BIND_DEPTH_STENCIL;
+    portalDesc.CPUAccessFlags = 0;
+    portalDesc.MiscFlags = 0;
+    if (FAILED(gD3DDevice->CreateTexture2D(&portalDesc, NULL, &gPortalDepthStencil)))
+    {
+        gLastError = "Error creating portal depth stencil texture";
+        return false;
+    }
+
+    // Create the depth stencil view, i.e. indicate that the texture just created is to be used as a depth buffer
+    D3D11_DEPTH_STENCIL_VIEW_DESC portalDescDSV = {};
+    portalDescDSV.Format = portalDesc.Format;
+    portalDescDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+    portalDescDSV.Texture2D.MipSlice = 0;
+    portalDescDSV.Flags = 0;
+    if (FAILED(gD3DDevice->CreateDepthStencilView(gPortalDepthStencil, &portalDescDSV, &gPortalDepthStencilView)))
+    {
+        gLastError = "Error creating portal depth stencil view";
+        return false;
+    }
+
+
+    //*****************************//
+    
+	//**** Create Shadow Map texture ****//
 	D3D11_TEXTURE2D_DESC textureDesc = {};
 	textureDesc.Width  = gShadowMapSize; // Size of the shadow map determines quality / resolution of shadows
 	textureDesc.Height = gShadowMapSize;
@@ -415,6 +528,7 @@ bool InitScene()
     gWizard    = new Model(gWizardMesh);
     gBox       = new Model(gBoxMesh);
     gWell      = new Model(gWellMesh);
+    gPortal    = new Model(gSpriteMesh);
 
     //Bats
     for (int i = 0; i < NUM_BATS; i++)
@@ -445,6 +559,7 @@ bool InitScene()
     gGlassCube->SetPosition({ 30, 25, -110 });
     gGlassCube->SetScale(3);
     gSprite->SetPosition({ 80, 25, -140 });
+    gSprite->SetScale(0.8);
     gTank->SetPosition({ 80, 5, -110 });
     gTank->SetScale(0.05);
     gTank->SetRotation({ 0.0f, ToRadians(-180.0f), 0.0f });
@@ -475,9 +590,9 @@ bool InitScene()
     gBox->SetRotation({ 0,ToRadians(180),0 });
     gWell->SetScale(0.1);
     gWell->SetPosition({ -58.1f ,4.6f,180.7f });
-    
+    gPortal->SetPosition({ 80, 60, -140 });
 
-    // Light set-up - using an array this time
+    // Light set-up
     for (int i = 0; i < NUM_LIGHTS; ++i)
     {
         Model* lightModel = new Model(gLightMesh);
@@ -512,6 +627,11 @@ bool InitScene()
     gCamera->SetPosition({ 25, 30, 160 });
     gCamera->SetRotation({ ToRadians(10), ToRadians(180), 0 });
 
+    //Set up portal camera
+    gPortalCamera = new Camera();
+    gPortalCamera->SetPosition({ -110, 12, 185 });
+    gPortalCamera->SetRotation({ ToRadians(-10), ToRadians(210), 0 });
+
     return true;
 }
 
@@ -527,6 +647,11 @@ void ReleaseResources()
     if (gShadowMap2DepthStencil)  gShadowMap2DepthStencil->Release();
     if (gShadowMap2SRV)           gShadowMap2SRV->Release();
     if (gShadowMap2Texture)       gShadowMap2Texture->Release();
+    if (gPortalDepthStencilView)  gPortalDepthStencilView->Release();
+    if (gPortalDepthStencil)      gPortalDepthStencil->Release();
+    if (gPortalTextureSRV)        gPortalTextureSRV->Release();
+    if (gPortalRenderTarget)      gPortalRenderTarget->Release();
+    if (gPortalTexture)           gPortalTexture->Release();
 
     for (int i = 0; i < NUM_TEXTURES; i++)
     {
@@ -543,7 +668,8 @@ void ReleaseResources()
     ReleaseShaders();
 
     // See note in InitGeometry about why we're not using unique_ptr and having to manually delete
-    delete gCamera;    gCamera = nullptr;
+    delete gCamera;        gCamera = nullptr;
+    delete gPortalCamera;  gPortalCamera = nullptr;
 
     //Delete light models
     for (int i = 0; i < NUM_LIGHTS; ++i)
@@ -636,6 +762,7 @@ void RenderDepthBufferFromLight(int lightIndex)
     gWizard->Render();
     gBox->Render();
     gWell->Render();
+    gPortal->Render();
 }
 
 
@@ -749,6 +876,15 @@ void RenderSceneFromCamera(Camera* camera)
     ID3D11ShaderResourceView* wellDiffuseSpecularMapSRV = gWizardTexture->GetDiffuseSpecularMapSRV();
     gD3DContext->PSSetShaderResources(0, 1, &wellDiffuseSpecularMapSRV);
     gWell->Render();
+
+    //Set Portal Shader
+    gD3DContext->PSSetShader(gTVPixelShader, nullptr, 0);
+
+    //Render Portal
+    gD3DContext->PSSetShaderResources(0, 1, &gPortalTextureSRV);
+    ID3D11ShaderResourceView* tvDiffuseSpecularMapSRV = gTVTexture->GetDiffuseSpecularMapSRV();
+    gD3DContext->PSSetShaderResources(3, 1, &tvDiffuseSpecularMapSRV);
+    gPortal->Render();
 
     //Set Normal Mapping Shaders
     gD3DContext->VSSetShader(gParallaxMappingVertexShader, nullptr, 0);
@@ -930,6 +1066,28 @@ void RenderScene()
     //**************************//
 
 
+    //// Portal scene rendering ////
+
+    // Set the portal texture and portal depth buffer as the targets for rendering
+    // The portal texture will later be used on models in the main scene
+    gD3DContext->OMSetRenderTargets(1, &gPortalRenderTarget, gPortalDepthStencilView);
+
+    // Clear the portal texture to a fixed colour and the portal depth buffer to the far distance
+    gD3DContext->ClearRenderTargetView(gPortalRenderTarget, &gBackgroundColor.r);
+    gD3DContext->ClearDepthStencilView(gPortalDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+    // Setup the viewport for the portal texture size
+    vp.Width = static_cast<FLOAT>(gPortalWidth);
+    vp.Height = static_cast<FLOAT>(gPortalHeight);
+    vp.MinDepth = 0.0f;
+    vp.MaxDepth = 1.0f;
+    vp.TopLeftX = 0;
+    vp.TopLeftY = 0;
+    gD3DContext->RSSetViewports(1, &vp);
+
+    // Render the scene for the portal
+    RenderSceneFromCamera(gPortalCamera);
+
     //// Main scene rendering ////
 
     // Set the back buffer as the target for rendering and select the main depth buffer.
@@ -963,15 +1121,6 @@ void RenderScene()
     // Unbind shadow maps from shaders - prevents warnings from DirectX when we try to render to the shadow maps again next frame
     ID3D11ShaderResourceView* nullView = nullptr;
     gD3DContext->PSSetShaderResources(1, 1, &nullView);
-
-
-    //*****************************//
-    // Temporary demonstration code for visualising the light's view of the scene
-    //ColourRGBA white = {1,1,1};
-    //gD3DContext->ClearRenderTargetView(gBackBufferRenderTarget, &white.r);
-    //RenderDepthBufferFromLight(0);
-    //*****************************//
-
 
     //// Scene completion ////
 
@@ -1115,7 +1264,7 @@ void UpdateScene(float frameTime)
     }
 }
 
-void CreateLights()
+void CreateLights()//Create light objects
 {
     for (int i = 0; i < NUM_LIGHTS; i++)
     {
