@@ -9,14 +9,11 @@
 // Textures (texture maps)
 //--------------------------------------------------------------------------------------
 
-// Here we allow the shader access to a texture that has been loaded from the C++ side and stored in GPU memory.
-// Note that textures are often called maps (because texture mapping describes wrapping a texture round a mesh).
-// Get used to people using the word "texture" and "map" interchangably.
 Texture2D    DiffuseMap : register(t0); // Diffuse map only
 Texture2D    CellMap    : register(t3); // CellMap is a 1D map that is used to limit the range of colours used in cell shading
 
 Texture2D ShadowMapLight1 : register(t1); // Texture holding the view of the scene from a light
-SamplerState PointClamp   : register(s1); // No filtering for shadow maps (you might think you could use trilinear or similar, but it will filter light depths not the shadows cast...)
+SamplerState PointClamp   : register(s1); 
 
 Texture2D ShadowMapLight2 : register(t2);
 
@@ -28,8 +25,6 @@ SamplerState PointSampleClamp : register(s2); // No filtering of cell maps (othe
 // Shader code
 //--------------------------------------------------------------------------------------
 
-// Pixel shader entry point - each shader has a "main" function
-// This shader just samples a diffuse texture map
 float4 main(LightingPixelShaderInput input) : SV_Target
 {
     // Lighting equations
@@ -51,8 +46,7 @@ float4 main(LightingPixelShaderInput input) : SV_Target
 	if (mul(-gLight1Facing, light1Direction) > gLight1CosHalfAngle)
 	{
 		// Using the world position of the current pixel and the matrices of the light (as a camera), find the 2D position of the
-		// pixel *as seen from the light*. Will use this to find which part of the shadow map to look at.
-		// These are the same as the view / projection matrix multiplies in a vertex shader (can improve performance by putting these lines in vertex shader)
+		// pixel as seen from the light. Will use this to find which part of the shadow map to look at.
 		float4 light1ViewPosition = mul(gLight1ViewMatrix, float4(input.worldPosition, 1.0f));
 		float4 light1Projection = mul(gLight1ProjectionMatrix, light1ViewPosition);
 
@@ -64,10 +58,11 @@ float4 main(LightingPixelShaderInput input) : SV_Target
 		// Get depth of this pixel if it were visible from the light (another advanced projection step)
 		float depthFromLight = light1Projection.z / light1Projection.w - DepthAdjust; //*** Adjustment so polygons don't shadow themselves
 
-		// Compare pixel depth from light with depth held in shadow map of the light. If shadow map depth is less than something is nearer
+		// Compare pixel depth from light with depth held in shadow map of the light. If shadow map depth is less then something is nearer
 		// to the light than this pixel - so the pixel gets no effect from this light
 		if (depthFromLight < ShadowMapLight1.Sample(PointClamp, shadowMapUV).r)
 		{
+			// Clamp the basic light level to a small range of colours.
 			float  diffuseLevel1 = max(dot(input.worldNormal, light1Direction), 0);
 			float  cellDiffuseLevel1 = CellMap.Sample(PointSampleClamp, diffuseLevel1).r;
 			float3 diffuseLight1 = gLight1Colour * cellDiffuseLevel1 / light1Distance;
@@ -110,12 +105,6 @@ float4 main(LightingPixelShaderInput input) : SV_Target
     float  light3Distance = length(light3Vector);
     float3 light3Direction = light3Vector / light3Distance; // Quicker than normalising as we have length for attenuation
 
-    //****| INFO |*************************************************************************************//
-    // To make a cartoon look to the lighting, we clamp the basic light level to just a small range of
-    // colours. This is done by using the light level itself as the U texture coordinate to look up
-    // a colour in a special 1D texture (a single line). This could be done with if statements, but
-    // GPUs are much faster at looking up small textures than if statements
-    //*************************************************************************************************//
     float  diffuseLevel3 = max(dot(input.worldNormal, light3Direction), 0);
     float  cellDiffuseLevel3 = CellMap.Sample(PointSampleClamp, diffuseLevel3).r;
     float3 diffuseLight3 = gLight3Colour * cellDiffuseLevel3 / light3Distance;
@@ -134,11 +123,9 @@ float4 main(LightingPixelShaderInput input) : SV_Target
     float3 diffuseLight4 = gLight4Colour * cellDiffuseLevel4 / light4Distance;
 
     halfway = normalize(light4Direction + cameraDirection);
-    float3 specularLight4 = diffuseLight4 * pow(max(dot(input.worldNormal, halfway), 0), gSpecularPower);
+	float3 specularLight4 = diffuseLight4 * pow(max(dot(input.worldNormal, halfway), 0), gSpecularPower);
 
-
-    // Sample diffuse material colour for this pixel from a texture using a given sampler that you set up in the C++ code
-    // Ignoring any alpha in the texture, just reading RGB
+	//Sample texture from diffusemap
     float4 textureColour = DiffuseMap.Sample(TexSampler, input.uv);
     float3 diffuseMaterialColour = textureColour.rgb;
     float specularMaterialColour = textureColour.a;
@@ -146,5 +133,5 @@ float4 main(LightingPixelShaderInput input) : SV_Target
     float3 finalColour = (gAmbientColour + diffuseLight1 + diffuseLight2 + diffuseLight3 + diffuseLight4) * diffuseMaterialColour +
                          (specularLight1 + specularLight2 + specularLight3 + specularLight4) * specularMaterialColour;
 
-    return float4(finalColour, 1.0f); // Always use 1.0f for alpha - no alpha blending in this lab
+    return float4(finalColour, 1.0f); // Always use 1.0f for alpha
 }

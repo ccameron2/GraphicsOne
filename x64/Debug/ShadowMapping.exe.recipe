@@ -2,60 +2,60 @@
 <Project>
   <ProjectOutputs>
     <ProjectOutput>
-      <FullPath>C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\ShadowMapping.exe</FullPath>
+      <FullPath>C:\Users\CCame\Documents\GraphicsOne\ShadowMapping.exe</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
   <ContentFiles>
     <ContentFile>
-      <FullPath>C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\CellShadingOutline_ps.cso</FullPath>
+      <FullPath>C:\Users\CCame\Documents\GraphicsOne\CellShadingOutline_ps.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\CellShadingOutline_vs.cso</FullPath>
+      <FullPath>C:\Users\CCame\Documents\GraphicsOne\CellShadingOutline_vs.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\CellShading_ps.cso</FullPath>
+      <FullPath>C:\Users\CCame\Documents\GraphicsOne\CellShading_ps.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\CellShading_vs.cso</FullPath>
+      <FullPath>C:\Users\CCame\Documents\GraphicsOne\CellShading_vs.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\DepthOnly_ps.cso</FullPath>
+      <FullPath>C:\Users\CCame\Documents\GraphicsOne\DepthOnly_ps.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\LightModel_ps.cso</FullPath>
+      <FullPath>C:\Users\CCame\Documents\GraphicsOne\LightModel_ps.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\BasicTransform_vs.cso</FullPath>
+      <FullPath>C:\Users\CCame\Documents\GraphicsOne\BasicTransform_vs.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Cube_ps.cso</FullPath>
+      <FullPath>C:\Users\CCame\Documents\GraphicsOne\Cube_ps.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\NormalMapping_ps.cso</FullPath>
+      <FullPath>C:\Users\CCame\Documents\GraphicsOne\NormalMapping_ps.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\ParallaxMapping_ps.cso</FullPath>
+      <FullPath>C:\Users\CCame\Documents\GraphicsOne\ParallaxMapping_ps.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\ParallaxMapping_vs.cso</FullPath>
+      <FullPath>C:\Users\CCame\Documents\GraphicsOne\ParallaxMapping_vs.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\ShadowMapping_ps.cso</FullPath>
+      <FullPath>C:\Users\CCame\Documents\GraphicsOne\ShadowMapping_ps.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\ShadowMapping_vs.cso</FullPath>
+      <FullPath>C:\Users\CCame\Documents\GraphicsOne\ShadowMapping_vs.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Sprite_ps.cso</FullPath>
+      <FullPath>C:\Users\CCame\Documents\GraphicsOne\Sprite_ps.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Sphere_ps.cso</FullPath>
+      <FullPath>C:\Users\CCame\Documents\GraphicsOne\Sphere_ps.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Sphere_vs.cso</FullPath>
+      <FullPath>C:\Users\CCame\Documents\GraphicsOne\Sphere_vs.cso</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\TV_ps.cso</FullPath>
+      <FullPath>C:\Users\CCame\Documents\GraphicsOne\TV_ps.cso</FullPath>
     </ContentFile>
   </ContentFiles>
   <SatelliteDlls />

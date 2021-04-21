@@ -7,12 +7,9 @@
 // Shader code
 //--------------------------------------------------------------------------------------
 
-// Vertex shader expands the model slightly for the outline
-// Only output is the vertex position transformed into screen space, but needs a little work
-// to get the amount to expand based on distance
 BasicPixelShaderInput main(BasicVertex modelVertex)
 {
-	BasicPixelShaderInput output; // This is the data the pixel shader requires from this vertex shader
+	BasicPixelShaderInput output;
 
 	// Transform model vertex position to world space using the world matrix passed from C++
 	float4 modelPosition = float4(modelVertex.position, 1);

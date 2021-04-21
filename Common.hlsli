@@ -16,6 +16,7 @@ struct BasicVertex
     float2 uv       : uv;
 };
 
+//Includes a tangent variable for normal and parallax mapping
 struct TangentVertex
 {
     float3 position : position;

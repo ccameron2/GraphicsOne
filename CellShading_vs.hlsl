@@ -1,9 +1,5 @@
-//--------------------------------------------------------------------------------------
-// Vertex shader for cell shading
-//--------------------------------------------------------------------------------------
-// Actually just a standard vertex shader - cell shading needs nothing different from per pixel lighting version here
 
-#include "Common.hlsli" // Shaders can also use include files - note the extension
+#include "Common.hlsli" // Shaders can also use include files
 
 
 //--------------------------------------------------------------------------------------
@@ -12,7 +8,7 @@
 
 LightingPixelShaderInput main(BasicVertex modelVertex)
 {
-    LightingPixelShaderInput output; // This is the data the pixel shader requires from this vertex shader
+    LightingPixelShaderInput output;
 
     // Input position is x,y,z only - need a 4th element to multiply by a 4x4 matrix. Use 1 for a point (0 for a vector) - recall lectures
     float4 modelPosition = float4(modelVertex.position, 1);
@@ -34,5 +30,5 @@ LightingPixelShaderInput main(BasicVertex modelVertex)
     // Pass texture coordinates (UVs) on to the pixel shader, the vertex shader doesn't need them
     output.uv = modelVertex.uv;
 
-    return output; // Ouput data sent down the pipeline (to the pixel shader)
+    return output; // Ouput data sent down the pipeline
 }

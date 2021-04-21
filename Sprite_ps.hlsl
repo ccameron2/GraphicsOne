@@ -4,21 +4,17 @@
 // Pixel shader receives position and normal from the vertex shader and uses them to calculate
 // lighting per pixel. Also samples a samples a diffuse + specular texture map and combines with light colour.
 
-#include "Common.hlsli" // Shaders can also use include files - note the extension
+#include "Common.hlsli"
 
 
 //--------------------------------------------------------------------------------------
 // Textures (texture maps)
 //--------------------------------------------------------------------------------------
 
-// Here we allow the shader access to a texture that has been loaded from the C++ side and stored in GPU memory.
-// Note that textures are often called maps (because texture mapping describes wrapping a texture round a mesh).
-// Get used to people using the word "texture" and "map" interchangably.
-Texture2D DiffuseSpecularMap : register(t0); // Textures here can contain a diffuse map (main colour) in their rgb channels and a specular map (shininess) in the a channel
-SamplerState TexSampler      : register(s0); // A sampler is a filter for a texture like bilinear, trilinear or anisotropic - this is the sampler used for the texture above
-
+Texture2D DiffuseSpecularMap : register(t0); 
+SamplerState TexSampler      : register(s0); 
 Texture2D ShadowMapLight1 : register(t1); // Texture holding the view of the scene from a light
-SamplerState PointClamp   : register(s1); // No filtering for shadow maps (you might think you could use trilinear or similar, but it will filter light depths not the shadows cast...)
+SamplerState PointClamp   : register(s1); // No filtering for shadow maps
 
 Texture2D ShadowMapLight2 : register(t2);
 //--------------------------------------------------------------------------------------
