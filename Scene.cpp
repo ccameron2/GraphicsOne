@@ -12,7 +12,6 @@
 #include "Input.h"
 #include "Common.h"
 
-//New classes
 #include "Light.h"
 #include "Texture.h"
 
@@ -34,7 +33,7 @@
 //--------------------------------------------------------------------------------------
 // Addition of Mesh, Model and Camera classes have greatly simplified this section
 // Geometry data has gone to Mesh class. Positions, rotations, matrices have gone to Model and Camera classes
-// Light and Texture classes have also been added. Textures contain both the diffuse and normal maps for the texture.
+// Light and Texture classes have also been added. Texture class contains both the diffuse and normal maps for the texture.
 // Lights contain a colour, strength value and model.
 
 // Constants controlling speed of movement/rotation (measured in units per second because we're using frame time)
@@ -157,7 +156,6 @@ ID3D11RenderTargetView* gPortalRenderTarget = nullptr; // This object is used wh
 ID3D11ShaderResourceView* gPortalTextureSRV = nullptr; // This object is used to give shaders access to the texture above (SRV = shader resource view)
 
 // Also need a depth/stencil buffer for the portal - it's just another kind of texture
-// NOTE: ***Can share this depth buffer between multiple portals of the same size***
 ID3D11Texture2D* gPortalDepthStencil = nullptr; // This object represents the memory used by the texture on the GPU
 ID3D11DepthStencilView* gPortalDepthStencilView = nullptr; // This object is used when we want to use the texture above as the depth buffer
 
@@ -241,7 +239,7 @@ Texture* gTextures[NUM_TEXTURES] = { gTrollTexture, gCargoTexture, gGrassTexture
                                      gGlassTexture, gSpriteTexture, gMetalTexture, gHatTexture,
                                      gPotionTexture, gTankTexture, gCatTexture , gTrunkTexture, 
                                      gLeavesTexture, gGriffinTexture, gTowerTexture, gWizardTexture,
-                                     gTVTexture, gCellMap, gCrystalTexture, gCellCrystalTexture, gTreeTexture     };
+                                     gTVTexture, gCellMap, gCrystalTexture, gCellCrystalTexture, gTreeTexture};
 
 //Parallax variables
 float gParallaxDepth = 0.1f;
@@ -367,9 +365,6 @@ bool InitGeometry()
     }
 
     //**** Create Portal Texture ****//
-
-    // Using a helper function to load textures from files above. Here we create the portal texture manually
-    // as we are creating a special kind of texture (one that we can render to). Many settings to prepare:
     D3D11_TEXTURE2D_DESC portalDesc = {};
     portalDesc.Width = gPortalWidth;  // Size of the portal texture determines its quality
     portalDesc.Height = gPortalHeight;
@@ -388,8 +383,7 @@ bool InitGeometry()
         return false;
     }
 
-    // We created the portal texture above, now we get a "view" of it as a render target, i.e. get a special pointer to the texture that
-    // we use when rendering to it (see RenderScene function below)
+    // We created the portal texture above, now we get a "view" of it as a render target
     if (FAILED(gD3DDevice->CreateRenderTargetView(gPortalTexture, NULL, &gPortalRenderTarget)))
     {
         gLastError = "Error creating portal render target view";
@@ -410,7 +404,6 @@ bool InitGeometry()
     //**** Create Portal Depth Buffer ****//
 
 // We also need a depth buffer to go with our portal
-//**** This depth buffer can be shared with any other portals of the same size
     portalDesc = {};
     portalDesc.Width = gPortalWidth;
     portalDesc.Height = gPortalHeight;
@@ -441,16 +434,14 @@ bool InitGeometry()
         return false;
     }
 
-
-    //*****************************//
     
 	//**** Create Shadow Map texture ****//
 	D3D11_TEXTURE2D_DESC textureDesc = {};
 	textureDesc.Width  = gShadowMapSize; // Size of the shadow map determines quality / resolution of shadows
 	textureDesc.Height = gShadowMapSize;
-	textureDesc.MipLevels = 1; // 1 level, means just the main texture, no additional mip-maps. Usually don't use mip-maps when rendering to textures (or we would have to render every level)
+	textureDesc.MipLevels = 1; // 1 level, means just the main texture, no additional mip-maps.
 	textureDesc.ArraySize = 1;
-	textureDesc.Format = DXGI_FORMAT_R32_TYPELESS; // The shadow map contains a single 32-bit value [tech gotcha: have to say typeless because depth buffer and shaders see things slightly differently]
+	textureDesc.Format = DXGI_FORMAT_R32_TYPELESS; // The shadow map contains a single 32-bit value
 	textureDesc.SampleDesc.Count = 1;
 	textureDesc.SampleDesc.Quality = 0;
 	textureDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -469,7 +460,7 @@ bool InitGeometry()
     }
 	// Create the depth stencil view, i.e. indicate that the texture just created is to be used as a depth buffer
 	D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-	dsvDesc.Format = DXGI_FORMAT_D32_FLOAT; // See "tech gotcha" above. The depth buffer sees each pixel as a "depth" float
+	dsvDesc.Format = DXGI_FORMAT_D32_FLOAT; 
 	dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	dsvDesc.Texture2D.MipSlice = 0;
     dsvDesc.Flags = 0;
@@ -487,8 +478,7 @@ bool InitGeometry()
    
  	// We also need to send this texture (resource) to the shaders. To do that we must create a shader-resource "view"
 	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Format = DXGI_FORMAT_R32_FLOAT; // See "tech gotcha" above. The shaders see textures as colours, so shadow map pixels are not seen as depths
-                                           // but rather as "red" floats (one float taken from RGB). Although the shader code will use the value as a depth
+	srvDesc.Format = DXGI_FORMAT_R32_FLOAT; 
 	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MostDetailedMip = 0;
 	srvDesc.Texture2D.MipLevels = 1;
@@ -624,14 +614,14 @@ bool InitScene()
     gLights[0]->SetColour(CVector3{ 0.8f, 0.8f, 1.0f });
     gLights[0]->SetStrength(10);
     gLights[0]->GetModel()->SetPosition({ 30, 28, 0 });
-    gLights[0]->GetModel()->SetScale(pow(gLights[0]->GetStrength(), 0.7f)); // Convert light strength into a nice value for the scale of the light - equation is ad-hoc.
+    gLights[0]->GetModel()->SetScale(pow(gLights[0]->GetStrength(), 0.7f)); // Convert light strength into a nice value for the scale of the light
 	gLights[0]->GetModel()->FaceTarget(gFox->Position());
                 
     gLights[1]->SetColour(CVector3{ 1.0f, 0.8f, 0.2f });
     gLights[1]->SetStrength(50);
     gLights[1]->GetModel()->SetPosition({ -15, 60, 120 });
     gLights[1]->GetModel()->SetScale(pow(gLights[1]->GetStrength(), 0.7f));
-	gLights[1]->GetModel()->FaceTarget({ gTeapot->Position() });
+	gLights[1]->GetModel()->FaceTarget({ gCube->Position() });
                 
     gLights[2]->SetColour(CVector3{ 1.0f, 0.8f, 0.2f });
     gLights[2]->SetStrength(25);
@@ -965,6 +955,7 @@ void RenderSceneFromCamera(Camera* camera)
     //Set Alpha Testing shader
     gD3DContext->VSSetShader(gPixelLightingVertexShader, nullptr, 0);
     gD3DContext->PSSetShader(gSpritePixelShader, nullptr, 0);
+    gD3DContext->OMSetBlendState(gAlphaBlending, nullptr, 0xffffff);
    
     //Render Sprite
     ID3D11ShaderResourceView* spriteDiffuseSpecularMapSRV = gSpriteTexture->GetDiffuseSpecularMapSRV();
@@ -1001,6 +992,7 @@ void RenderSceneFromCamera(Camera* camera)
 
     //Render cell shaded crystal: 1st pass (Inside out, slightly bigger and black)
     gCellCrystal->Render();
+
     //Render cell shaded trees: 1st pass
     for (int i = 0; i < NUM_TREES; i++)
     {
@@ -1320,9 +1312,7 @@ void UpdateScene(float frameTime)
         frameTimeMs << std::fixed << avgFrameTime * 1000;
         std::string windowTitle = "CO2409 Week 20: Shadow Mapping - Frame Time: " + frameTimeMs.str() +
                                   "ms, FPS: " + std::to_string(static_cast<int>(1 / avgFrameTime + 0.5f)) + ", XPos: " + std::to_string(gCamera->Position().x) +
-                                   ", YPos: " + std::to_string(gCamera->Position().y) + ", ZPos: " + std::to_string(gCamera->Position().z) + 
-                                   ", XRot: "+ std::to_string(ToDegrees(gCamera->Rotation().x)) + ", YRot: " + std::to_string(ToDegrees(gCamera->Rotation().y)) +
-                                   ", ZRot: " + std::to_string(ToDegrees(gCamera->Rotation().z));
+                                   ", YPos: " + std::to_string(gCamera->Position().y) + ", ZPos: " + std::to_string(gCamera->Position().z);
         SetWindowTextA(gHWnd, windowTitle.c_str());
         totalFrameTime = 0;
         frameCount = 0;

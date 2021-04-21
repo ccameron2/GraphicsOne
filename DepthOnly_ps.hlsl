@@ -4,7 +4,7 @@
 // Pixel shader that only outputs the depth of a pixel - used to render the scene from the point
 // of view of the lights in preparation for shadow mapping
 
-#include "Common.hlsli" // Shaders can also use include files - note the extension
+#include "Common.hlsli"
 
 
 //--------------------------------------------------------------------------------------
@@ -12,7 +12,7 @@
 //--------------------------------------------------------------------------------------
 
 // Shader used when rendering the shadow map depths. The pixel shader doesn't really need to calculate a pixel colour
-// since we are only writing to the depth buffer. However, one of the exercises displays the content on the screen.
+// since we are only writing to the depth buffer.
 float4 main(SimplePixelShaderInput input) : SV_Target
 {
 	// Output the value that would go in the depth buffer to the pixel colour (greyscale)
@@ -20,9 +20,3 @@ float4 main(SimplePixelShaderInput input) : SV_Target
     // values are close to 1, which might give the (mistaken) impression that the depth buffer is empty
 	return pow(input.projectedPosition.z, 20);
 }
-
-
-// NOTE: The correct way to write a pixel shader that doesn't output a colour is this:
-// You can use this line when not interested in visualising the depth buffer.
-//     void main(SimplePixelShaderInput input) {}
-// If the depth buffer is enabled, this will output depth but no colour (C++ side render target should be nullptr)

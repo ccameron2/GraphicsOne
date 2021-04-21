@@ -4,15 +4,6 @@
 
 #include "Common.hlsli" // Shaders can also use include files - note the extension
 
-
-//--------------------------------------------------------------------------------------
-// Shader code
-//--------------------------------------------------------------------------------------
-
-//****| INFO |*******************************************************************************************//
-// The vertex shader for parallax mapping is identical to normal mapping. The parallax adjustment occurs
-// in the pixel shader
-//*******************************************************************************************************//
 NormalPixelShaderInput main(TangentVertex modelVertex)
 {
     NormalPixelShaderInput output; // This is the data the pixel shader requires from this vertex shader
