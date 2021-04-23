@@ -65,14 +65,16 @@ Mesh* gWizardMesh;
 Mesh* gBoxMesh;
 Mesh* gWellMesh;
 Mesh* gCrystalMesh;
+Mesh* gDragonMesh;
+Mesh* gPillarMesh;
 
 //Array to hold all meshes. This allows for easy deletion.
-const int NUM_MESHES = 24;
+const int NUM_MESHES = 26;
 Mesh* gMeshes[NUM_MESHES] = { gFoxMesh, gCrateMesh, gGroundMesh, gSphereMesh, gLightMesh,
                               gTeapotMesh, gCubeMesh, gTreeMesh, gBatMesh, gGlassCubeMesh,
                               gSpriteMesh, gTankMesh, gHatMesh, gPotionMesh, gCatMesh, gTrunkMesh,
                               gLeavesMesh, gTowerMesh , gGriffinMesh, gWizardMesh, gBoxMesh, gWellMesh,
-                              gCrystalMesh};
+                              gCrystalMesh, gDragonMesh, gPillarMesh};
 
 Model* gFox;
 Model* gCrate;
@@ -97,14 +99,16 @@ Model* gWell;
 Model* gPortal;
 Model* gCrystal;
 Model* gCellCrystal;
+Model* gDragon;
+Model* gPillar;
 
 //Array to hold all models, this allows for easy deletion
-const int NUM_MODELS = 23;
-Model* gModels[NUM_MODELS] = {gFox,    gCrate, gGround, gSphere,
+const int NUM_MODELS = 25;
+Model* gModels[NUM_MODELS] = { gFox,    gCrate, gGround, gSphere,
                               gTeapot, gCube,  gBat, gGlassCube,
                               gSprite, gTank,  gHat, gPotion, gCat, gTrunk,
-                              gLeaves, gTower, gGriffin, gWizard, gBox, gWell, 
-                              gPortal, gCrystal, gCellCrystal };
+                              gLeaves, gTower, gGriffin, gWizard, gBox, gWell,
+                              gPortal, gCrystal, gCellCrystal, gDragon, gPillar };
 //Array to hold tanks
 const int NUM_TANKS = 20;
 Model* gTanks[NUM_TANKS];
@@ -219,7 +223,7 @@ Texture* gPatternTexture = new Texture("PatternDiffuseSpecular.dds", "PatternNor
 Texture* gFoxTexture = new Texture("fox.png");
 Texture* gBatTexture = new Texture("Bat.png");
 Texture* gWallTexture = new Texture("WallDiffuseSpecular.dds", "WallNormalHeight.dds");
-Texture* gGlassTexture = new Texture("Glass.jpg");
+Texture* gGlassTexture = new Texture("glass2.png");
 Texture* gSpriteTexture = new Texture("pikachu.png");
 Texture* gMetalTexture = new Texture("MetalDiffuseSpecular.dds", "MetalNormal.dds");
 Texture* gHatTexture = new Texture("hat.jpeg", "hatnormal.png");
@@ -236,8 +240,10 @@ Texture* gCellMap = new Texture("CellGradient.png");
 Texture* gCrystalTexture = new Texture("crystal.png");
 Texture* gCellCrystalTexture = new Texture("purple.png");
 Texture* gTreeTexture = new Texture("LightGreen.png");
+Texture* gDragonTexture = new Texture("dragon.jpg", "dragonN.jpg");
 
-const int NUM_TEXTURES = 29;
+
+const int NUM_TEXTURES = 30;
 
 //Array to hold all textures. This allows for the loading of all textures and easy deletion.
 Texture* gTextures[NUM_TEXTURES] = { gTrollTexture, gCargoTexture, gGrassTexture, gFlareTexture,
@@ -246,7 +252,8 @@ Texture* gTextures[NUM_TEXTURES] = { gTrollTexture, gCargoTexture, gGrassTexture
                                      gGlassTexture, gSpriteTexture, gMetalTexture, gHatTexture,
                                      gPotionTexture, gTankTexture, gCatTexture , gTrunkTexture, 
                                      gLeavesTexture, gGriffinTexture, gTowerTexture, gWizardTexture,
-                                     gTVTexture, gCellMap, gCrystalTexture, gCellCrystalTexture, gTreeTexture};
+                                     gTVTexture, gCellMap, gCrystalTexture, gCellCrystalTexture, 
+                                     gTreeTexture, gDragonTexture };
 
 //Parallax variables
 float gParallaxDepth = 0.1f;
@@ -303,6 +310,8 @@ bool InitGeometry()
         gBoxMesh       = new Mesh("box.fbx");
         gWellMesh      = new Mesh("well.fbx");
         gCrystalMesh   = new Mesh("crystal.fbx");
+        gDragonMesh    = new Mesh("dragon.fbx", true);
+        gPillarMesh    = new Mesh("pillar.fbx");
 
     }
     catch (std::runtime_error e)  // Constructors cannot return error messages so use exceptions to catch mesh errors
@@ -546,6 +555,8 @@ bool InitScene()
     gPortal    = new Model(gSpriteMesh);
     gCrystal   = new Model(gCrystalMesh);
     gCellCrystal = new Model(gCrystalMesh);
+    gDragon    = new Model(gDragonMesh);
+    gPillar    = new Model(gCubeMesh);
 
     int tankCount = 0;
     float tankAdjust = 10.0f;
@@ -600,16 +611,16 @@ bool InitScene()
 	gFox->SetPosition({ -135, 2, 150 });
     gFox->SetScale(0.2);
     gFox->SetRotation({ 0, ToRadians(220), 0 });
-	gCrate->SetPosition({ 58, 4, 100 });
+	gCrate->SetPosition({ 10, 6, -80 });
 	gCrate->SetScale(6);
 	gCrate->SetRotation({ 0.0f, ToRadians(-180.0f), 0.0f });
-    gSphere->SetPosition({ 120, 40, 5 });
+    gSphere->SetPosition({ 150, 55, 60 });
     gSphere->SetScale(2);
-    gTeapot->SetPosition({ 90, 8,30 });
-    gTeapot->SetScale(1.5);
-    gCube->SetPosition({ 5, 30, -80 });
-    gCube->SetScale(3);
-    gGlassCube->SetPosition({ 30, 25, -160 });
+    gTeapot->SetPosition({ 140, 30, 120 });
+    gTeapot->SetScale(3);
+    gCube->SetPosition({ 140, 50, 0 });
+    gCube->SetScale(4);
+    gGlassCube->SetPosition({ 30, 30, -160 });
     gGlassCube->SetScale(3);
     gSprite->SetPosition({ 75, 12, -185 });
     gSprite->SetScale(0.8);
@@ -643,13 +654,21 @@ bool InitScene()
     gBox->SetRotation({ 0,ToRadians(180),0 });
     gWell->SetScale(0.1);
     gWell->SetPosition({ -58.1f ,4.6f,180.7f });
-    gPortal->SetPosition({ 80, 60, -140 });
+    gPortal->SetPosition({ 80, 60, -160 });
+    gPortal->SetScale(1.5);
     gCrystal->SetPosition({ -42, 4.5f, 88 });
     gCrystal->SetScale(0.2);
-    gCrystal->SetRotation({ 0,ToRadians(180),0 });
+    gCrystal->SetRotation({ 0,ToRadians(200),0 });
     gCellCrystal->SetPosition({ -106, -1, 187 });
     gCellCrystal->SetRotation({0,ToRadians(0),0});
     gCellCrystal->SetScale(0.2);
+
+    gDragon->SetPosition({ -150, 55, -140 });
+    gDragon->SetRotation({ 0,ToRadians(-20),0 });
+    gDragon->SetScale(0.09);
+
+    gPillar->SetPosition({ gDragon->Position() - CVector3{20,35,5} });
+    gPillar->SetScale(3);
 
     // Light set-up
     for (int i = 0; i < NUM_LIGHTS; ++i)
@@ -658,26 +677,26 @@ bool InitScene()
         gLights[i]->SetModel(lightModel);
     }
 
-    gLights[0]->SetColour(CVector3{ 0.8f, 0.8f, 1.0f });
-    gLights[0]->SetStrength(10);
+    gLights[0]->SetColour(CVector3{ 0.5f, 0.2f, 0.87f });
+    gLights[0]->SetStrength(25);
     gLights[0]->GetModel()->SetPosition({ 30, 28, 0 });
     gLights[0]->GetModel()->SetScale(pow(gLights[0]->GetStrength(), 0.7f)); // Convert light strength into a nice value for the scale of the light
 	gLights[0]->GetModel()->FaceTarget(gFox->Position());
                 
     gLights[1]->SetColour(CVector3{ 1.0f, 0.8f, 0.2f });
-    gLights[1]->SetStrength(50);
-    gLights[1]->GetModel()->SetPosition({ -15, 60, 160 });
+    gLights[1]->SetStrength(60);
+    gLights[1]->GetModel()->SetPosition({ 20, 120, 160 });
     gLights[1]->GetModel()->SetScale(pow(gLights[1]->GetStrength(), 0.7f));
-	gLights[1]->GetModel()->FaceTarget({ gTeapot->Position() });
+	gLights[1]->GetModel()->FaceTarget({ gWizard->Position() });
                 
     gLights[2]->SetColour(CVector3{ 1.0f, 0.8f, 0.2f });
-    gLights[2]->SetStrength(25);
-    gLights[2]->GetModel()->SetPosition({ 50, 80, -110 });
+    gLights[2]->SetStrength(30);
+    gLights[2]->GetModel()->SetPosition({ 50, 90, -120 });
     gLights[2]->GetModel()->SetScale(pow(gLights[2]->GetStrength(), 0.7f));
 
     gLights[3]->SetColour(CVector3{ 1.0f, 0.8f, 0.2f });
-    gLights[3]->SetStrength(25);
-    gLights[3]->GetModel()->SetPosition({ -120, 80, 130 });
+    gLights[3]->SetStrength(30);
+    gLights[3]->GetModel()->SetPosition({ 50, 120, 60 });
     gLights[3]->GetModel()->SetScale(pow(gLights[3]->GetStrength(), 0.7f));
 
     //// Set up camera ////
@@ -840,6 +859,8 @@ void RenderDepthBufferFromLight(int lightIndex)
     gPortal->Render();
     gCrystal->Render();
     gCellCrystal->Render();
+    gDragon->Render();
+    gPillar->Render();
 }
 
 
@@ -881,8 +902,6 @@ void RenderSceneFromCamera(Camera* camera)
 
     // Render other lit models
     
-
-
     //Render bats;
     ID3D11ShaderResourceView* batDiffuseSpecularMapSRV = gBatTexture->GetDiffuseSpecularMapSRV();
     gD3DContext->PSSetShaderResources(0, 1, &batDiffuseSpecularMapSRV);
@@ -979,6 +998,14 @@ void RenderSceneFromCamera(Camera* camera)
 
     gHat->Render();
 
+    //Render Dragon
+    ID3D11ShaderResourceView* dragonDiffuseSpecularMapSRV = gDragonTexture->GetDiffuseSpecularMapSRV();
+    gD3DContext->PSSetShaderResources(0, 1, &dragonDiffuseSpecularMapSRV);
+
+    ID3D11ShaderResourceView* dragonNormalMapSRV = gDragonTexture->GetNormalMapSRV();
+    gD3DContext->PSSetShaderResources(3, 1, &dragonNormalMapSRV);
+
+    gDragon->Render();
 
     //Set Parallax Mapping Shaders
     gD3DContext->VSSetShader(gParallaxMappingVertexShader, nullptr, 0);
@@ -992,6 +1019,14 @@ void RenderSceneFromCamera(Camera* camera)
     gD3DContext->PSSetShaderResources(3, 1, &teapotNormalMapSRV);
 
     gTeapot->Render();
+
+    //Render Pillar
+    ID3D11ShaderResourceView* pillarDiffuseSpecularMapSRV = gTechTexture->GetDiffuseSpecularMapSRV();
+    gD3DContext->PSSetShaderResources(0, 1, &pillarDiffuseSpecularMapSRV);
+    ID3D11ShaderResourceView* pillarNormalMapSRV = gTechTexture->GetNormalMapSRV();
+    gD3DContext->PSSetShaderResources(3, 1, &pillarNormalMapSRV);
+
+    gPillar->Render();
 
     //Set Sphere Shaders
     gD3DContext->VSSetShader(gSphereVertexShader, nullptr, 0);
