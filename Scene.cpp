@@ -105,6 +105,13 @@ Model* gModels[NUM_MODELS] = {gFox,    gCrate, gGround, gSphere,
                               gSprite, gTank,  gHat, gPotion, gCat, gTrunk,
                               gLeaves, gTower, gGriffin, gWizard, gBox, gWell, 
                               gPortal, gCrystal, gCellCrystal };
+//Array to hold tanks
+const int NUM_TANKS = 20;
+Model* gTanks[NUM_TANKS];
+
+//Array to hold sprites
+const int NUM_SPRITES = 80;
+Model* gSprites[NUM_SPRITES];
 
 //Array to hold trees. This allows for easy placement in the scene setup
 const int NUM_TREES = 10;
@@ -213,7 +220,7 @@ Texture* gFoxTexture = new Texture("fox.png");
 Texture* gBatTexture = new Texture("Bat.png");
 Texture* gWallTexture = new Texture("WallDiffuseSpecular.dds", "WallNormalHeight.dds");
 Texture* gGlassTexture = new Texture("Glass.jpg");
-Texture* gSpriteTexture = new Texture("wizard.jpg");
+Texture* gSpriteTexture = new Texture("pikachu.png");
 Texture* gMetalTexture = new Texture("MetalDiffuseSpecular.dds", "MetalNormal.dds");
 Texture* gHatTexture = new Texture("hat.jpeg", "hatnormal.png");
 Texture* gPotionTexture = new Texture("potion.png");
@@ -305,7 +312,11 @@ bool InitGeometry()
     }
 
     //Create light objects
-    CreateLights();
+    for (int i = 0; i < NUM_LIGHTS; i++)
+    {
+        Light* light = new Light();
+        gLights[i] = light;
+    }
     
     // Load the shaders required for the geometry we will use (see Shader.cpp / .h)
     if (!LoadShaders())
@@ -536,6 +547,40 @@ bool InitScene()
     gCrystal   = new Model(gCrystalMesh);
     gCellCrystal = new Model(gCrystalMesh);
 
+    int tankCount = 0;
+    float tankAdjust = 10.0f;
+
+    //Tanks
+    for (int i = 0; i < NUM_TANKS; i++)
+    {
+        if (tankCount > 4)
+        {
+            tankCount = 0;
+            tankAdjust += 10.0f;
+        }
+        tankCount++;
+        gTanks[i] = new Model(gTankMesh);
+        gTanks[i]->SetPosition({ 66 + tankCount * 4.0f, 1 , -50 - tankAdjust });
+        gTanks[i]->SetScale(0.01);
+    }
+
+    int spriteCount = 0;
+    float spriteAdjust = 10.0f;
+
+    //Sprites
+    for (int i = 0; i < NUM_SPRITES; i++)
+    {
+        if (spriteCount > 9)
+        {
+            spriteCount = 0;
+            spriteAdjust += 10.0f;
+        }
+        spriteCount++;
+        gSprites[i] = new Model(gSpriteMesh);
+        gSprites[i]->SetPosition({ 56 + spriteCount * 4.0f, 2 , -100 - spriteAdjust});
+        gSprites[i]->SetScale(0.1);
+    }
+
     //Bats
     for (int i = 0; i < NUM_BATS; i++)
     {
@@ -558,15 +603,17 @@ bool InitScene()
 	gCrate->SetPosition({ 58, 4, 100 });
 	gCrate->SetScale(6);
 	gCrate->SetRotation({ 0.0f, ToRadians(-180.0f), 0.0f });
-    gSphere->SetPosition({ 70, 20, 10 });
-    gTeapot->SetPosition({ 40, 5, 70 });
-    gCube->SetPosition({ 40, 15, 10 });
-    gCube->SetScale(2);
-    gGlassCube->SetPosition({ 30, 25, -110 });
+    gSphere->SetPosition({ 120, 40, 5 });
+    gSphere->SetScale(2);
+    gTeapot->SetPosition({ 90, 8,30 });
+    gTeapot->SetScale(1.5);
+    gCube->SetPosition({ 5, 30, -80 });
+    gCube->SetScale(3);
+    gGlassCube->SetPosition({ 30, 25, -160 });
     gGlassCube->SetScale(3);
-    gSprite->SetPosition({ 80, 25, -140 });
+    gSprite->SetPosition({ 75, 12, -185 });
     gSprite->SetScale(0.8);
-    gTank->SetPosition({ 80, 5, -110 });
+    gTank->SetPosition({ 80, 5, -80 });
     gTank->SetScale(0.05);
     gTank->SetRotation({ 0.0f, ToRadians(-180.0f), 0.0f });
     gHat->SetPosition(gFox->Position() + CVector3{5, 17.5f, 6.2f });
@@ -619,9 +666,9 @@ bool InitScene()
                 
     gLights[1]->SetColour(CVector3{ 1.0f, 0.8f, 0.2f });
     gLights[1]->SetStrength(50);
-    gLights[1]->GetModel()->SetPosition({ -15, 60, 120 });
+    gLights[1]->GetModel()->SetPosition({ -15, 60, 160 });
     gLights[1]->GetModel()->SetScale(pow(gLights[1]->GetStrength(), 0.7f));
-	gLights[1]->GetModel()->FaceTarget({ gCube->Position() });
+	gLights[1]->GetModel()->FaceTarget({ gTeapot->Position() });
                 
     gLights[2]->SetColour(CVector3{ 1.0f, 0.8f, 0.2f });
     gLights[2]->SetStrength(25);
@@ -695,6 +742,18 @@ void ReleaseResources()
         delete gModels[i]; gModels[i] = nullptr;
     }
 
+    //Delete Tanks
+    for (int i = 0; i < NUM_TANKS; i++)
+    {
+        delete gTanks[i]; gTanks[i] = nullptr;
+    }
+
+    //Delete Sprites
+    for (int i = 0; i < NUM_SPRITES; i++)
+    {
+        delete gSprites[i]; gSprites[i] = nullptr;
+    }
+
     //Delete Trees
     for (int i = 0; i < NUM_TREES; i++)
     {
@@ -760,6 +819,10 @@ void RenderDepthBufferFromLight(int lightIndex)
     for (int i = 0; i < NUM_BATS; i++)
     {
         gBats[i]->Render();
+    }
+    for (int i = 0; i < NUM_SPRITES; i++)
+    {
+        gSprites[i]->Render();
     }
     gGlassCube->Render();
     gSprite->Render();
@@ -849,10 +912,16 @@ void RenderSceneFromCamera(Camera* camera)
     gD3DContext->PSSetShaderResources(0, 1, &crateDiffuseSpecularMapSRV);
     gCrate->Render();
 
-    //Render Tank
+    ////Render Tanks
     ID3D11ShaderResourceView* tankDiffuseSpecularMapSRV = gTankTexture->GetDiffuseSpecularMapSRV();
     gD3DContext->PSSetShaderResources(0, 1, &tankDiffuseSpecularMapSRV);
-    gTank->Render();
+
+
+    //Render Tanks
+    for (int i = 0; i < NUM_TANKS; i++)
+    {
+        gTanks[i]->Render();
+    }
 
     //Render Cat
     ID3D11ShaderResourceView* catDiffuseSpecularMapSRV = gCatTexture->GetDiffuseSpecularMapSRV();
@@ -916,10 +985,10 @@ void RenderSceneFromCamera(Camera* camera)
     gD3DContext->PSSetShader(gParallaxMappingPixelShader, nullptr, 0);
     
     //Render Teapot
-    ID3D11ShaderResourceView* teapotDiffuseSpecularMapSRV = gTechTexture->GetDiffuseSpecularMapSRV();
+    ID3D11ShaderResourceView* teapotDiffuseSpecularMapSRV = gPatternTexture->GetDiffuseSpecularMapSRV();
     gD3DContext->PSSetShaderResources(0, 1, &teapotDiffuseSpecularMapSRV);
 
-    ID3D11ShaderResourceView* teapotNormalMapSRV = gTechTexture->GetNormalMapSRV();
+    ID3D11ShaderResourceView* teapotNormalMapSRV = gPatternTexture->GetNormalMapSRV();
     gD3DContext->PSSetShaderResources(3, 1, &teapotNormalMapSRV);
 
     gTeapot->Render();
@@ -963,6 +1032,12 @@ void RenderSceneFromCamera(Camera* camera)
     gD3DContext->OMSetDepthStencilState(gUseDepthBufferState, 0);
     gSprite->Render();
 
+    //Render army of sprites
+    for (int i = 0; i < NUM_SPRITES; i++)
+    {
+        gSprites[i]->Render();
+    }
+    
     //Multiplicative Blending
     // Select which shaders to use next
     gD3DContext->VSSetShader(gPixelLightingVertexShader, nullptr, 0);
@@ -1316,14 +1391,5 @@ void UpdateScene(float frameTime)
         SetWindowTextA(gHWnd, windowTitle.c_str());
         totalFrameTime = 0;
         frameCount = 0;
-    }
-}
-
-void CreateLights()//Create light objects
-{
-    for (int i = 0; i < NUM_LIGHTS; i++)
-    {
-        Light* light = new Light();
-        gLights[i] = light;
     }
 }

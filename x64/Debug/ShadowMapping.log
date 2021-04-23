@@ -1,2 +1,30 @@
-﻿  Main.cpp
-  ShadowMapping.vcxproj -> C:\Users\CCame\Documents\GraphicsOne\ShadowMapping.exe
+﻿  Scene.cpp
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(564,33): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(581,34): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(589,31): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(596,33): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(601,23): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(615,26): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(617,25): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(624,25): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(626,27): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(627,26): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(634,27): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(637,25): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(638,26): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(641,23): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(644,24): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(648,27): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(652,31): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(1292,54): warning C4305: '+=': truncation from 'double' to 'float'
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(1300,55): warning C4305: '+=': truncation from 'double' to 'float'
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(1309,25): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(1310,25): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(1311,25): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(1318,15): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(1321,19): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(1330,15): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(1333,19): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(1342,15): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\Scene.cpp(1345,19): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+  ShadowMapping.vcxproj -> C:\Users\CCame\OneDrive - Office 365\CO2409 Computer Graphics\Assignment\GraphicsOne\ShadowMapping.exe

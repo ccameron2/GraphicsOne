@@ -31,6 +31,4 @@ void RenderScene();
 // frameTime is the time passed since the last frame
 void UpdateScene(float frameTime);
 
-void CreateLights(); //Create light objects and add to global array
-
 #endif //_SCENE_H_INCLUDED_
