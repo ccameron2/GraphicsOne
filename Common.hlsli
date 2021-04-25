@@ -122,6 +122,7 @@ cbuffer PerFrameConstants : register(b0) // The b0 gives this constant buffer th
     float    gOutlineThickness; // Controls thickness of outlines for cell shading
 
     float    wiggle;
+    float3   padding11;
 }
 // Note constant buffers are not structs: we don't use the name of the constant buffer, these are really just a collection of global variables (hence the 'g')
 

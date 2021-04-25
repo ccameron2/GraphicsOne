@@ -931,10 +931,9 @@ void RenderSceneFromCamera(Camera* camera)
     gD3DContext->PSSetShaderResources(0, 1, &crateDiffuseSpecularMapSRV);
     gCrate->Render();
 
-    ////Render Tanks
+    //Render Tanks
     ID3D11ShaderResourceView* tankDiffuseSpecularMapSRV = gTankTexture->GetDiffuseSpecularMapSRV();
     gD3DContext->PSSetShaderResources(0, 1, &tankDiffuseSpecularMapSRV);
-
 
     //Render Tanks
     for (int i = 0; i < NUM_TANKS; i++)
@@ -972,6 +971,7 @@ void RenderSceneFromCamera(Camera* camera)
     gD3DContext->PSSetShaderResources(0, 1, &wellDiffuseSpecularMapSRV);
     gWell->Render();
 
+    //Render Crystal
     ID3D11ShaderResourceView* crystalDiffuseSpecularMapSRV = gCrystalTexture->GetDiffuseSpecularMapSRV();
     gD3DContext->PSSetShaderResources(0, 1, &crystalDiffuseSpecularMapSRV);
     gCrystal->Render();
@@ -986,7 +986,7 @@ void RenderSceneFromCamera(Camera* camera)
     gPortal->Render();
 
     //Set Normal Mapping Shaders
-    gD3DContext->VSSetShader(gParallaxMappingVertexShader, nullptr, 0);
+    gD3DContext->VSSetShader(gNormalMappingVertexShader, nullptr, 0);
     gD3DContext->PSSetShader(gNormalMappingPixelShader, nullptr, 0);
 
     //Render Hat
@@ -1008,7 +1008,7 @@ void RenderSceneFromCamera(Camera* camera)
     gDragon->Render();
 
     //Set Parallax Mapping Shaders
-    gD3DContext->VSSetShader(gParallaxMappingVertexShader, nullptr, 0);
+    gD3DContext->VSSetShader(gNormalMappingVertexShader, nullptr, 0);
     gD3DContext->PSSetShader(gParallaxMappingPixelShader, nullptr, 0);
     
     //Render Teapot
@@ -1040,7 +1040,7 @@ void RenderSceneFromCamera(Camera* camera)
     gSphere->Render();
     
     //Set Cube Shaders
-    gD3DContext->VSSetShader(gParallaxMappingVertexShader, nullptr, 0);
+    gD3DContext->VSSetShader(gNormalMappingVertexShader, nullptr, 0);
     gD3DContext->PSSetShader(gCubePixelShader, nullptr, 0);
 
     //Render Cube

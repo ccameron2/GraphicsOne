@@ -110,7 +110,7 @@
     <FxCompile Include="ParallaxMapping_ps.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="ParallaxMapping_vs.hlsl">
+    <FxCompile Include="NormalMapping_vs.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Sprite_ps.hlsl">

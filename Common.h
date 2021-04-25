@@ -101,6 +101,7 @@ struct PerFrameConstants
     float      outlineThickness; // Controls thickness of outlines for cell shading
 
     float      wiggle;
+    CVector3   padding11;
 };
 
 extern PerFrameConstants gPerFrameConstants;      // This variable holds the CPU-side constant buffer described above

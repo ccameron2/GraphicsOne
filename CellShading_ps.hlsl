@@ -53,7 +53,7 @@ float4 main(LightingPixelShaderInput input) : SV_Target
 		// Convert 2D pixel position as viewed from light into texture coordinates for shadow map - an advanced topic related to the projection step
 		// Detail: 2D position x & y get perspective divide, then converted from range -1->1 to UV range 0->1. Also flip V axis
 		float2 shadowMapUV = 0.5f * light1Projection.xy / light1Projection.w + float2(0.5f, 0.5f);
-		shadowMapUV.y = 1.0f - shadowMapUV.y;	// Check if pixel is within light cone
+		shadowMapUV.y = 1.0f - shadowMapUV.y;
 
 		// Get depth of this pixel if it were visible from the light (another advanced projection step)
 		float depthFromLight = light1Projection.z / light1Projection.w - DepthAdjust; //*** Adjustment so polygons don't shadow themselves
