@@ -611,9 +611,9 @@ bool InitScene()
 	gFox->SetPosition({ -135, 2, 150 });
     gFox->SetScale(0.2);
     gFox->SetRotation({ 0, ToRadians(220), 0 });
-	gCrate->SetPosition({ 10, 6, -80 });
+	gCrate->SetPosition({ 14, 6, -80 });
 	gCrate->SetScale(6);
-	gCrate->SetRotation({ 0.0f, ToRadians(-180.0f), 0.0f });
+	gCrate->SetRotation({ 0.0f, ToRadians(-180.0f), ToRadians(10.0f) });
     gSphere->SetPosition({ 150, 55, 60 });
     gSphere->SetScale(2);
     gTeapot->SetPosition({ 140, 30, 120 });
