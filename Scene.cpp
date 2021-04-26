@@ -383,7 +383,8 @@ bool InitGeometry()
 
     //Create cube mapping texture
     std::string name = "cubeMap.dds";
-    DirectX::CreateDDSTextureFromFileEx(gD3DDevice, CA2CT(name.c_str()), 0, D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE, 0, D3D11_RESOURCE_MISC_TEXTURECUBE, false, (ID3D11Resource**)&cubeMapTex, &cubeMapSRV, nullptr);
+    DirectX::CreateDDSTextureFromFileEx(gD3DDevice, CA2CT(name.c_str()), 0, D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE, 0, D3D11_RESOURCE_MISC_TEXTURECUBE, false, 
+        (ID3D11Resource**)&cubeMapTex, &cubeMapSRV, nullptr);
 
     //**** Create Portal Texture ****//
     D3D11_TEXTURE2D_DESC portalDesc = {};
@@ -699,6 +700,7 @@ bool InitScene()
     gPillar->SetScale(3);
 
     gMapping->SetPosition({ 0,20,0 });
+    gMapping->SetScale(2);
 
     gLights[0]->SetColour(CVector3{ 0.5f, 0.2f, 0.87f });
     gLights[0]->SetStrength(25);
@@ -723,7 +725,6 @@ bool InitScene()
     gLights[3]->GetModel()->SetScale(pow(gLights[3]->GetStrength(), 0.7f));
 
     //// Set up camera ////
-
     gCamera = new Camera();
     gCamera->SetPosition({ 25, 30, 160 });
     gCamera->SetRotation({ ToRadians(10), ToRadians(180), 0 });

@@ -24,8 +24,7 @@ float4 main(LightingPixelShaderInput input) : SV_Target
     // Normal might have been scaled by model scaling or interpolation so renormalise
 	input.worldNormal = normalize(input.worldNormal);
 
-	// Calculate lighting
-    
+	// Calculate lighting  
     // Direction from pixel to camera
 	float3 cameraDirection = normalize(gCameraPosition - input.worldPosition);
 
