@@ -26,7 +26,7 @@
 
 #include <sstream>
 #include <memory>
-
+#include <atlbase.h>
 
 //--------------------------------------------------------------------------------------
 // Scene Data
@@ -39,7 +39,6 @@
 // Constants controlling speed of movement/rotation (measured in units per second because we're using frame time)
 const float ROTATION_SPEED = 2.0f;  // 2 radians per second for rotation
 const float MOVEMENT_SPEED = 50.0f; // 50 units per second for movement (what a unit of length is depends on 3D model - i.e. an artist decision usually)
-
 
 // Meshes, models and cameras, same meaning as TL-Engine. Meshes prepared in InitGeometry function, Models & camera in InitScene
 Mesh* gFoxMesh;
@@ -101,14 +100,15 @@ Model* gCrystal;
 Model* gCellCrystal;
 Model* gDragon;
 Model* gPillar;
+Model* gMapping;
 
 //Array to hold all models, this allows for easy deletion
-const int NUM_MODELS = 25;
+const int NUM_MODELS = 26;
 Model* gModels[NUM_MODELS] = { gFox,    gCrate, gGround, gSphere,
                               gTeapot, gCube,  gBat, gGlassCube,
                               gSprite, gTank,  gHat, gPotion, gCat, gTrunk,
                               gLeaves, gTower, gGriffin, gWizard, gBox, gWell,
-                              gPortal, gCrystal, gCellCrystal, gDragon, gPillar };
+                              gPortal, gCrystal, gCellCrystal, gDragon, gPillar, gMapping };
 //Array to hold tanks
 const int NUM_TANKS = 20;
 Model* gTanks[NUM_TANKS];
@@ -188,11 +188,6 @@ ID3D11Texture2D*          gShadowMap2Texture      = nullptr;
 ID3D11DepthStencilView*   gShadowMap2DepthStencil = nullptr;
 ID3D11ShaderResourceView* gShadowMap2SRV          = nullptr;
 
-
-//*********************//
-
-
-
 //--------------------------------------------------------------------------------------
 // Constant Buffers
 //--------------------------------------------------------------------------------------
@@ -203,8 +198,6 @@ ID3D11Buffer*     gPerFrameConstantBuffer; // The GPU buffer that will recieve t
 
 PerModelConstants gPerModelConstants;      // As above, but constant that change per-model (e.g. world matrix)
 ID3D11Buffer*     gPerModelConstantBuffer; // --"--
-
-
 
 //--------------------------------------------------------------------------------------
 // Textures
@@ -254,6 +247,10 @@ Texture* gTextures[NUM_TEXTURES] = { gTrollTexture, gCargoTexture, gGrassTexture
                                      gLeavesTexture, gGriffinTexture, gTowerTexture, gWizardTexture,
                                      gTVTexture, gCellMap, gCrystalTexture, gCellCrystalTexture, 
                                      gTreeTexture, gDragonTexture };
+
+//Cube Mapping Variables
+ID3D11Resource* cubeMapTex;
+ID3D11ShaderResourceView* cubeMapSRV;
 
 //Parallax variables
 float gParallaxDepth = 0.1f;
@@ -383,6 +380,10 @@ bool InitGeometry()
         gTextures[i]->SetNormalMap(NormalMap);
         gTextures[i]->SetNormalMapSRV(NormalMapSRV);
     }
+
+    //Create cube mapping texture
+    std::string name = "cubeMap.dds";
+    DirectX::CreateDDSTextureFromFileEx(gD3DDevice, CA2CT(name.c_str()), 0, D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE, 0, D3D11_RESOURCE_MISC_TEXTURECUBE, false, (ID3D11Resource**)&cubeMapTex, &cubeMapSRV, nullptr);
 
     //**** Create Portal Texture ****//
     D3D11_TEXTURE2D_DESC portalDesc = {};
@@ -557,6 +558,7 @@ bool InitScene()
     gCellCrystal = new Model(gCrystalMesh);
     gDragon    = new Model(gDragonMesh);
     gPillar    = new Model(gCubeMesh);
+    gMapping   = new Model(gTeapotMesh);
 
     int tankCount = 0;
     float tankAdjust = 10.0f;
@@ -607,58 +609,84 @@ bool InitScene()
         gTrees[i]->SetScale(0.06);
     }
 
+    // Light set-up
+    for (int i = 0; i < NUM_LIGHTS; ++i)
+    {
+        Model* lightModel = new Model(gLightMesh);
+        gLights[i]->SetModel(lightModel);
+    }
+
 	// Initial positions
 	gFox->SetPosition({ -135, 2, 150 });
     gFox->SetScale(0.2);
     gFox->SetRotation({ 0, ToRadians(220), 0 });
+
 	gCrate->SetPosition({ 14, 6, -80 });
 	gCrate->SetScale(6);
 	gCrate->SetRotation({ 0.0f, ToRadians(-180.0f), ToRadians(10.0f) });
+
     gSphere->SetPosition({ 150, 55, 60 });
     gSphere->SetScale(2);
+
     gTeapot->SetPosition({ 140, 30, 120 });
     gTeapot->SetScale(3);
+
     gCube->SetPosition({ 140, 50, 0 });
     gCube->SetScale(4);
+
     gGlassCube->SetPosition({ 30, 30, -160 });
     gGlassCube->SetScale(3);
+
     gSprite->SetPosition({ 75, 12, -185 });
     gSprite->SetScale(0.8);
+
     gTank->SetPosition({ 80, 5, -80 });
     gTank->SetScale(0.05);
     gTank->SetRotation({ 0.0f, ToRadians(-180.0f), 0.0f });
+
     gHat->SetPosition(gFox->Position() + CVector3{5, 17.5f, 6.2f });
     gHat->SetRotation({ ToRadians(-6.0f), 0.0f , ToRadians(10.0f) });
     gHat->SetScale(11);
+
     gCat->SetPosition({ -125, 2, 145 });
     gCat->SetRotation({ 0.0f, ToRadians(-100.0f), 0.0f });
     gCat->SetScale(0.013);
+
     gPotion->SetPosition(gCat->Position() + CVector3{ 5.8f, 4.0f, 1.0f });
     gPotion->SetScale(0.01);
+
     gTrunk->SetScale(0.15);
     gLeaves->SetScale(gTrunk->Scale());
     gTrunk->SetPosition({-140,2,188});
     gLeaves->SetPosition(gTrunk->Position() + CVector3{ 0, 30.0f, 0 });
     gLeaves->SetRotation({ 0,ToRadians(180) ,0 });
+
     gGriffin->SetPosition({-160,80,100});
     gGriffin->SetRotation({ 0,ToRadians(240) ,0 });
     gGriffin->SetScale(0.1);
+
     gTower->SetPosition({ -117.0f,22.0f,30.6f });
     gTower->SetRotation({ ToRadians(-5.0f), ToRadians(-200.0f), 0.0F });
     gTower->SetScale(0.1);
+
     gWizard->SetScale(0.1);
     gWizard->SetPosition({ -143.1f,7.0f,96.5f });
     gWizard->SetRotation({ 0.0f, ToRadians(-140.0f), 0.0F });
+
     gBox->SetScale(0.1);
     gBox->SetPosition({ -93,28,-2 });
     gBox->SetRotation({ 0,ToRadians(180),0 });
+
     gWell->SetScale(0.1);
     gWell->SetPosition({ -58.1f ,4.6f,180.7f });
+
     gPortal->SetPosition({ 80, 60, -160 });
     gPortal->SetScale(1.5);
+
     gCrystal->SetPosition({ -42, 4.5f, 88 });
     gCrystal->SetScale(0.2);
     gCrystal->SetRotation({ 0,ToRadians(200),0 });
+
     gCellCrystal->SetPosition({ -106, -1, 187 });
     gCellCrystal->SetRotation({0,ToRadians(0),0});
     gCellCrystal->SetScale(0.2);
@@ -670,12 +698,7 @@ bool InitScene()
     gPillar->SetPosition({ gDragon->Position() - CVector3{20,35,5} });
     gPillar->SetScale(3);
 
-    // Light set-up
-    for (int i = 0; i < NUM_LIGHTS; ++i)
-    {
-        Model* lightModel = new Model(gLightMesh);
-        gLights[i]->SetModel(lightModel);
-    }
+    gMapping->SetPosition({ 0,20,0 });
 
     gLights[0]->SetColour(CVector3{ 0.5f, 0.2f, 0.87f });
     gLights[0]->SetStrength(25);
@@ -793,8 +816,6 @@ void ReleaseResources()
 
 }
 
-
-
 //--------------------------------------------------------------------------------------
 // Scene Rendering
 //--------------------------------------------------------------------------------------
@@ -861,6 +882,7 @@ void RenderDepthBufferFromLight(int lightIndex)
     gCellCrystal->Render();
     gDragon->Render();
     gPillar->Render();
+    gMapping->Render();
 }
 
 
@@ -975,6 +997,11 @@ void RenderSceneFromCamera(Camera* camera)
     ID3D11ShaderResourceView* crystalDiffuseSpecularMapSRV = gCrystalTexture->GetDiffuseSpecularMapSRV();
     gD3DContext->PSSetShaderResources(0, 1, &crystalDiffuseSpecularMapSRV);
     gCrystal->Render();
+
+    //Render cube mapping
+    gD3DContext->PSSetShader(gCubeMappingPixelShader, nullptr, 0);
+    gD3DContext->PSSetShaderResources(0, 1, &cubeMapSRV);
+    gMapping->Render();
 
     //Set Portal Shader
     gD3DContext->PSSetShader(gTVPixelShader, nullptr, 0);
@@ -1161,9 +1188,6 @@ void RenderSceneFromCamera(Camera* camera)
     }
 }
 
-
-
-
 // Rendering the scene now renders everything twice. First it renders the scene for the portal into a texture.
 // Then it renders the main scene using the portal texture on a model.
 void RenderScene()
@@ -1199,7 +1223,6 @@ void RenderScene()
     gPerFrameConstants.outlineColour =          OutlineColour;
     gPerFrameConstants.outlineThickness =       OutlineThickness;
 
-    //***************************************//
     //// Render from light's point of view ////
     
     // Only rendering from light 1 to begin with
@@ -1229,9 +1252,6 @@ void RenderScene()
 
     // Render the scene from the point of view of light 2 (only depth values written)
     RenderDepthBufferFromLight(1);
-
-    //**************************//
-
 
     //// Portal scene rendering ////
 

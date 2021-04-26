@@ -1,65 +1,31 @@
-﻿  compilation object save succeeded; see C:\Users\CCame\Documents\GraphicsOne\CellShadingOutline_ps.cso
-  compilation object save succeeded; see C:\Users\CCame\Documents\GraphicsOne\CellShadingOutline_vs.cso
-  compilation object save succeeded; see C:\Users\CCame\Documents\GraphicsOne\CellShading_ps.cso
-  compilation object save succeeded; see C:\Users\CCame\Documents\GraphicsOne\CellShading_vs.cso
-  compilation object save succeeded; see C:\Users\CCame\Documents\GraphicsOne\DepthOnly_ps.cso
-  compilation object save succeeded; see C:\Users\CCame\Documents\GraphicsOne\LightModel_ps.cso
-  compilation object save succeeded; see C:\Users\CCame\Documents\GraphicsOne\BasicTransform_vs.cso
-  compilation object save succeeded; see C:\Users\CCame\Documents\GraphicsOne\Cube_ps.cso
-  compilation object save succeeded; see C:\Users\CCame\Documents\GraphicsOne\NormalMapping_ps.cso
-  compilation object save succeeded; see C:\Users\CCame\Documents\GraphicsOne\ParallaxMapping_ps.cso
-  compilation object save succeeded; see C:\Users\CCame\Documents\GraphicsOne\NormalMapping_vs.cso
-  compilation object save succeeded; see C:\Users\CCame\Documents\GraphicsOne\CubeMapping_ps.cso
-  compilation object save succeeded; see C:\Users\CCame\Documents\GraphicsOne\ShadowMapping_ps.cso
-  compilation object save succeeded; see C:\Users\CCame\Documents\GraphicsOne\ShadowMapping_vs.cso
-  compilation object save succeeded; see C:\Users\CCame\Documents\GraphicsOne\Sprite_ps.cso
-  compilation object save succeeded; see C:\Users\CCame\Documents\GraphicsOne\Sphere_ps.cso
-  compilation object save succeeded; see C:\Users\CCame\Documents\GraphicsOne\Sphere_vs.cso
-  compilation object save succeeded; see C:\Users\CCame\Documents\GraphicsOne\TV_ps.cso
-  Camera.cpp
-  Direct3DSetup.cpp
-  Light.cpp
-  Main.cpp
-  CMatrix4x4.cpp
-  CVector2.cpp
-  CVector3.cpp
-  Model.cpp
-  Scene.cpp
-C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(575,33): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(592,34): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(600,31): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(607,33): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(612,23): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(626,26): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(628,25): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(635,25): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(637,27): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(638,26): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(645,27): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(648,25): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(649,26): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(652,23): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(655,24): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(660,27): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(664,31): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(668,27): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(1327,54): warning C4305: '+=': truncation from 'double' to 'float'
-C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(1335,55): warning C4305: '+=': truncation from 'double' to 'float'
-C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(1344,25): warning C4305: 'initializing': truncation from 'double' to 'float'
-C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(1345,25): warning C4305: 'initializing': truncation from 'double' to 'float'
-C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(1346,25): warning C4305: 'initializing': truncation from 'double' to 'float'
-C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(1353,15): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(1356,19): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(1365,15): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(1368,19): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(1377,15): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(1380,19): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-  Shader.cpp
-  Mesh.cpp
-  State.cpp
-  Texture.cpp
-  Input.cpp
-  GraphicsHelpers.cpp
-  Timer.cpp
-  Generating Code...
+﻿  Scene.cpp
+C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(577,33): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(594,34): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(602,31): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(609,33): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(621,23): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(641,26): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(644,25): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(653,25): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(656,27): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(658,26): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(666,27): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(670,25): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(672,26): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(676,23): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(680,24): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(687,27): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(692,31): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(696,27): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(1347,54): warning C4305: '+=': truncation from 'double' to 'float'
+C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(1355,55): warning C4305: '+=': truncation from 'double' to 'float'
+C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(1364,25): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(1365,25): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(1366,25): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(1373,15): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(1376,19): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(1385,15): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(1388,19): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(1397,15): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\CCame\Documents\GraphicsOne\Scene.cpp(1400,19): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
   ShadowMapping.vcxproj -> C:\Users\CCame\Documents\GraphicsOne\ShadowMapping.exe

@@ -33,6 +33,7 @@ ID3D11PixelShader*  gSpritePixelShader              = nullptr;
 ID3D11PixelShader*  gTVPixelShader                  = nullptr;
 ID3D11PixelShader*  gCellShadingPixelShader         = nullptr;
 ID3D11PixelShader*  gCellShadingOutlinePixelShader  = nullptr;
+ID3D11PixelShader*  gCubeMappingPixelShader         = nullptr;
 
 //--------------------------------------------------------------------------------------
 // Shader creation / destruction
@@ -61,6 +62,7 @@ bool LoadShaders()
     gCellShadingPixelShader         = LoadPixelShader("CellShading_ps"  );
     gCellShadingOutlineVertexShader = LoadVertexShader("CellShadingOutline_vs"  );
     gCellShadingOutlinePixelShader  = LoadPixelShader("CellShadingOutline_ps"  );
+    gCubeMappingPixelShader         = LoadPixelShader("CubeMapping_ps");
 
     if (gPixelLightingVertexShader  == nullptr || gPixelLightingPixelShader       == nullptr  ||
         gBasicTransformVertexShader == nullptr || gLightModelPixelShader          == nullptr  || 
@@ -70,7 +72,7 @@ bool LoadShaders()
         gSpritePixelShader          == nullptr || gNormalMappingPixelShader       == nullptr  ||
         gTVPixelShader              == nullptr || gCellShadingOutlineVertexShader == nullptr  ||
         gCellShadingVertexShader    == nullptr || gCellShadingOutlinePixelShader  == nullptr  || 
-        gCellShadingPixelShader     == nullptr)
+        gCellShadingPixelShader     == nullptr || gCubeMappingPixelShader == nullptr)
     {
         gLastError = "Error loading shaders";
         return false;
@@ -90,7 +92,7 @@ void ReleaseShaders()
     if (gSpherePixelShader)             gSpherePixelShader->Release();
     if (gSphereVertexShader)            gSphereVertexShader->Release();
     if (gCubePixelShader)               gCubePixelShader->Release();
-    if (gNormalMappingVertexShader)   gNormalMappingVertexShader->Release();
+    if (gNormalMappingVertexShader)     gNormalMappingVertexShader->Release();
     if (gParallaxMappingPixelShader)    gParallaxMappingPixelShader->Release();
     if (gSpritePixelShader)             gSpritePixelShader->Release();
     if (gNormalMappingPixelShader)      gNormalMappingPixelShader->Release();
@@ -99,7 +101,7 @@ void ReleaseShaders()
     if(gCellShadingPixelShader)         gCellShadingPixelShader->Release();
     if(gCellShadingOutlineVertexShader) gCellShadingOutlineVertexShader->Release();
     if(gCellShadingOutlinePixelShader)  gCellShadingOutlinePixelShader ->Release();
-
+    if (gCubeMappingPixelShader)        gCubeMappingPixelShader->Release();
 }
 
 
