@@ -1,0 +1,4 @@
+﻿  compilation object save succeeded; see C:\Users\CCame\Documents\GraphicsOne\Cube_ps.cso
+C:\Users\CCame\Documents\GraphicsOne\NormalMapping_ps.hlsl(65,31): error X5589: Invalid const register num: 32. Max allowed is 31.
+  
+  compilation failed; no code produced

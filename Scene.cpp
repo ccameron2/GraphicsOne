@@ -681,7 +681,7 @@ bool InitScene()
     gWell->SetScale(0.1);
     gWell->SetPosition({ -58.1f ,4.6f,180.7f });
 
-    gPortal->SetPosition({ 80, 60, -160 });
+    gPortal->SetPosition({ 80, 60, -170 });
     gPortal->SetScale(1.5);
 
     gCrystal->SetPosition({ -42, 4.5f, 88 });
@@ -703,7 +703,7 @@ bool InitScene()
     gMapping->SetScale(2);
 
     gLights[0]->SetColour(CVector3{ 0.5f, 0.2f, 0.87f });
-    gLights[0]->SetStrength(25);
+    gLights[0]->SetStrength(40);
     gLights[0]->GetModel()->SetPosition({ 30, 28, 0 });
     gLights[0]->GetModel()->SetScale(pow(gLights[0]->GetStrength(), 0.7f)); // Convert light strength into a nice value for the scale of the light
 	gLights[0]->GetModel()->FaceTarget(gFox->Position());
