@@ -44,7 +44,7 @@ bool InitDirect3D()
     // Create a Direct3D device (i.e. initialise D3D) and create a swap-chain (create a back buffer to render to)
     DXGI_SWAP_CHAIN_DESC swapDesc = {};
     swapDesc.OutputWindow = gHWnd;                           // Target window
-    swapDesc.Windowed = TRUE;
+    swapDesc.Windowed = FALSE;
     swapDesc.BufferCount = 1;
     swapDesc.BufferDesc.Width  = gViewportWidth;             // Target window size
     swapDesc.BufferDesc.Height = gViewportHeight;            // --"--
